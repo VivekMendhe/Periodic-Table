@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import type { ElementData } from '../../types/element';
+import type { ElementData, ElementCategory } from '../../types/element';
 import { CATEGORIES } from '../../data/categories';
+import { ELEMENT_SHELLS } from '../../data/elementExtensions';
 import { CustomElementSelect } from '../Compare/CustomElementSelect';
+import { BohrAtomModel } from './BohrAtomModel';
+import { ElectronTransferArc } from './ElectronTransferArc';
 import {
   calculateReaction,
   generateAtomAssemblyLayout,
@@ -21,7 +24,14 @@ interface ReactionLabModalProps {
   theme?: 'light' | 'dark';
 }
 
-type AnimationStage = 'idle' | 'approaching' | 'interacting' | 'bonded' | 'rejected';
+export type ReactionAnimationPhase =
+  | 'idle'
+  | 'phase1_prep'     // 0 - 1.2s: Zoom & highlight valence shells & electrons
+  | 'phase2_detach'   // 1.2 - 2.5s: Electron detaches from donor, donor config updates, Na+ forms
+  | 'phase3_transfer' // 2.5 - 4.0s: Electron travels along curved trajectory with glowing trail
+  | 'phase4_accept'   // 4.0 - 5.2s: Electron enters acceptor shell, octet completes (e.g. 7->8), Cl- forms
+  | 'phase5_bond'     // 5.2s+: Oppositely charged ions attract, bond formed, dossier shown
+  | 'rejected';       // For inert/repulsion collisions
 
 export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
   isOpen,
@@ -35,18 +45,18 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
   const [userSelectedB, setUserSelectedB] = useState<number | null>(null);
   const [prevInitA, setPrevInitA] = useState<number | undefined>(initialElementA?.atomicNumber);
   const [prevInitB, setPrevInitB] = useState<number | undefined>(initialElementB?.atomicNumber);
-  const [animStage, setAnimStage] = useState<AnimationStage>('idle');
+  const [animPhase, setAnimPhase] = useState<ReactionAnimationPhase>('idle');
   const timerRef = useRef<number | null>(null);
 
   if (initialElementA?.atomicNumber !== prevInitA) {
     setPrevInitA(initialElementA?.atomicNumber);
     setUserSelectedA(null);
-    setAnimStage('idle');
+    setAnimPhase('idle');
   }
   if (initialElementB?.atomicNumber !== prevInitB) {
     setPrevInitB(initialElementB?.atomicNumber);
     setUserSelectedB(null);
-    setAnimStage('idle');
+    setAnimPhase('idle');
   }
 
   const elemAId = userSelectedA ?? initialElementA?.atomicNumber ?? 11; // Default Na
@@ -86,52 +96,94 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
     [elemA, elemB, reaction]
   );
 
+  // Identify donor & acceptor for ionic transfer
+  const isIonic = reaction.outcome === 'IONIC_BOND';
+  const isCovalent = reaction.outcome === 'COVALENT_POLAR' || reaction.outcome === 'COVALENT_NONPOLAR';
+
+  const enA = parseFloat(elemA.electronegativity) || 2.0;
+  const enB = parseFloat(elemB.electronegativity) || 2.0;
+
+  const donorSymbol = reaction.donorSymbol || (enA <= enB ? elemA.symbol : elemB.symbol);
+  const acceptorSymbol = reaction.acceptorSymbol || (enA > enB ? elemA.symbol : elemB.symbol);
+
+  const donorNode = assemblyPlan.atoms.find((a) => a.symbol === donorSymbol) || assemblyPlan.atoms[0];
+  const acceptorNode =
+    assemblyPlan.atoms.find((a) => a.symbol === acceptorSymbol) ||
+    assemblyPlan.atoms[assemblyPlan.atoms.length - 1];
+
   // Reset animation when elements change
   const handleSelectA = useCallback((id: number) => {
+    if (timerRef.current) window.clearTimeout(timerRef.current);
     setUserSelectedA(id);
-    setAnimStage('idle');
+    setAnimPhase('idle');
   }, []);
 
   const handleSelectB = useCallback((id: number) => {
+    if (timerRef.current) window.clearTimeout(timerRef.current);
     setUserSelectedB(id);
-    setAnimStage('idle');
+    setAnimPhase('idle');
   }, []);
 
   const handleSwap = useCallback(() => {
+    if (timerRef.current) window.clearTimeout(timerRef.current);
     setUserSelectedA(elemBId);
     setUserSelectedB(elemAId);
-    setAnimStage('idle');
+    setAnimPhase('idle');
   }, [elemAId, elemBId]);
 
   const handlePresetClick = useCallback((atomA: number, atomB: number) => {
+    if (timerRef.current) window.clearTimeout(timerRef.current);
     setUserSelectedA(atomA);
     setUserSelectedB(atomB);
-    setAnimStage('idle');
+    setAnimPhase('idle');
   }, []);
 
-  // Execute reaction animation sequence
+  // Execute 5-Phase sequential reaction animation (5-7 seconds)
   const startReaction = useCallback(() => {
     if (timerRef.current) window.clearTimeout(timerRef.current);
-    setAnimStage('approaching');
 
-    // Stage 1: Approach center (800ms)
-    timerRef.current = window.setTimeout(() => {
-      setAnimStage('interacting');
-
-      // Stage 2: Interaction climax & Ring electron transfer (1000ms)
+    if (!reaction.isReactive) {
+      // Repulsion / Inert Sequence
+      setAnimPhase('phase1_prep');
       timerRef.current = window.setTimeout(() => {
-        if (reaction.isReactive) {
-          setAnimStage('bonded');
-        } else {
-          setAnimStage('rejected');
-        }
+        setAnimPhase('phase2_detach'); // atoms approach
+        timerRef.current = window.setTimeout(() => {
+          setAnimPhase('phase3_transfer'); // clash with barrier
+          timerRef.current = window.setTimeout(() => {
+            setAnimPhase('rejected'); // recoil bounce & forcefield
+          }, 1200);
+        }, 1200);
       }, 1000);
-    }, 800);
+      return;
+    }
+
+    // Phase 1: Reaction Preparation (0 - 1.2s)
+    setAnimPhase('phase1_prep');
+
+    // Phase 2: Electron Leaves Donor / Valence shift (1.2s)
+    timerRef.current = window.setTimeout(() => {
+      setAnimPhase('phase2_detach');
+
+      // Phase 3: Electron Travels along Curved Trajectory (2.5s)
+      timerRef.current = window.setTimeout(() => {
+        setAnimPhase('phase3_transfer');
+
+        // Phase 4: Acceptor Accepts Electron & Completes Octet (4.0s)
+        timerRef.current = window.setTimeout(() => {
+          setAnimPhase('phase4_accept');
+
+          // Phase 5: Ionic / Covalent Bond Formation (5.3s)
+          timerRef.current = window.setTimeout(() => {
+            setAnimPhase('phase5_bond');
+          }, 1300);
+        }, 1500);
+      }, 1300);
+    }, 1200);
   }, [reaction.isReactive]);
 
   const resetArena = useCallback(() => {
     if (timerRef.current) window.clearTimeout(timerRef.current);
-    setAnimStage('idle');
+    setAnimPhase('idle');
   }, []);
 
   if (!isOpen) return null;
@@ -148,26 +200,104 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
     }
   };
 
-  // Helper to get current coordinates of an atom node
+  // Coordinates of an atom node across animation phases
   const getAtomCoords = (atom: AtomVisualNode) => {
-    switch (animStage) {
+    switch (animPhase) {
       case 'idle':
+      case 'phase1_prep':
         return { x: atom.startX, y: atom.startY };
-      case 'approaching':
+      case 'phase2_detach':
         return {
-          x: atom.startX + (atom.bondedX - atom.startX) * 0.45,
-          y: atom.startY + (atom.bondedY - atom.startY) * 0.45,
+          x: atom.startX + (atom.bondedX - atom.startX) * 0.12,
+          y: atom.startY + (atom.bondedY - atom.startY) * 0.12,
         };
-      case 'interacting':
+      case 'phase3_transfer':
         return {
-          x: atom.startX + (atom.bondedX - atom.startX) * 0.82,
-          y: atom.startY + (atom.bondedY - atom.startY) * 0.82,
+          x: atom.startX + (atom.bondedX - atom.startX) * 0.28,
+          y: atom.startY + (atom.bondedY - atom.startY) * 0.28,
         };
-      case 'bonded':
+      case 'phase4_accept':
+        return {
+          x: atom.startX + (atom.bondedX - atom.startX) * 0.55,
+          y: atom.startY + (atom.bondedY - atom.startY) * 0.55,
+        };
+      case 'phase5_bond':
       case 'rejected':
         return { x: atom.bondedX, y: atom.bondedY };
     }
   };
+
+  // Live narrative message for students
+  const getNarrativeMessage = () => {
+    switch (animPhase) {
+      case 'idle':
+        return 'Select two elements above and click "⚡ Initiate Reaction" to observe atomic shells, electron detachment, and chemical bond formation.';
+      case 'phase1_prep':
+        if (isIonic) {
+          return `Phase 1 (Preparation): ${donorNode.name} highlights outermost shell with 1 valence electron. ${acceptorNode.name} highlights outermost shell with 7 valence electrons, needing 1 electron to complete its octet.`;
+        }
+        if (isCovalent) {
+          return `Phase 1 (Preparation): Both nonmetal atoms align their outermost valence shells in preparation to share electron pairs.`;
+        }
+        return `Phase 1 (Preparation): Evaluating atomic electron shells... Stable closed shells detected.`;
+      case 'phase2_detach':
+        if (isIonic) {
+          return `Phase 2 (Ionization): Outermost valence electron detaches from ${donorNode.name}'s shell. ${donorNode.symbol} becomes positively charged ${donorNode.symbol}⁺ ion with its 3rd shell now empty!`;
+        }
+        if (isCovalent) {
+          return `Phase 2 (Valence Shift): Valence electrons migrate toward the inter-nuclear bonding axis.`;
+        }
+        return `Phase 2 (Approach): Inert electron shells approach each other.`;
+      case 'phase3_transfer':
+        if (isIonic) {
+          return `Phase 3 (Transfer Trajectory): The electron glides continuously along a curved electric trajectory toward ${acceptorNode.name}, leaving a radiant glowing trail.`;
+        }
+        if (isCovalent) {
+          return `Phase 3 (Orbital Overlap): Atomic electron clouds overlap, forming shared molecular orbital regions.`;
+        }
+        return `Phase 3 (Coulomb Repulsion): Mutual electron cloud repulsion creates a strong electrostatic forcefield.`;
+      case 'phase4_accept':
+        if (isIonic) {
+          return `Phase 4 (Octet Completion): ${acceptorNode.name} captures the incoming electron into its outermost shell, completing a stable octet (8 electrons) as negatively charged ${acceptorNode.symbol}⁻ ion!`;
+        }
+        if (isCovalent) {
+          return `Phase 4 (Synchronized Sharing): Shared electron pairs orbit across both nuclei simultaneously.`;
+        }
+        return `Phase 4 (Forcefield Shockwave): Electrostatic repulsion wave deflects collision energy!`;
+      case 'phase5_bond':
+        if (isIonic) {
+          return `Phase 5 (Electrostatic Attraction): Oppositely charged ions (${donorNode.symbol}⁺ and ${acceptorNode.symbol}⁻) attract via Coulomb forces (F = k·q₁q₂/r²) to form ${reaction.compoundFormula} (${reaction.compoundName})!`;
+        }
+        if (isCovalent) {
+          return `Phase 5 (Covalent Bond Locked): Stable ${reaction.compoundFormula} (${reaction.compoundName}) molecule formed with shared electron pairs.`;
+        }
+        return `Phase 5 (Elastic Recoil): Atoms bounce off each other without chemical bond formation.`;
+      case 'rejected':
+        return `Collision repelled! Atoms bounce apart without forming a chemical bond.`;
+    }
+  };
+
+  const getStepState = (step: number) => {
+    const phaseOrder: Record<ReactionAnimationPhase, number> = {
+      idle: 0,
+      phase1_prep: 1,
+      phase2_detach: 2,
+      phase3_transfer: 3,
+      phase4_accept: 4,
+      phase5_bond: 5,
+      rejected: 5,
+    };
+    const currentStep = phaseOrder[animPhase];
+    if (currentStep === step) return 'active';
+    if (currentStep > step) return 'completed';
+    return '';
+  };
+
+  const isAnimating =
+    animPhase === 'phase1_prep' ||
+    animPhase === 'phase2_detach' ||
+    animPhase === 'phase3_transfer' ||
+    animPhase === 'phase4_accept';
 
   return (
     <div
@@ -192,7 +322,7 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
                 Chemical Reaction & Bonding Lab
               </h2>
               <p className="reaction-modal-subtitle">
-                Visualizing how individual atoms move, transfer electrons, and assemble into molecular bonds
+                Scientifically accurate atomic electron shells, real-time electron transfer, and chemical bond formation
               </p>
             </div>
           </div>
@@ -251,17 +381,18 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
               onClick={handleSwap}
               title="Swap Reactant Positions"
               aria-label="Swap atoms"
+              disabled={isAnimating}
             >
               ⇄
             </button>
             <button
               type="button"
-              className={`initiate-btn ${animStage === 'approaching' || animStage === 'interacting' ? 'is-running' : ''}`}
+              className={`initiate-btn ${isAnimating ? 'is-running' : ''}`}
               onClick={startReaction}
-              disabled={animStage === 'approaching' || animStage === 'interacting'}
+              disabled={isAnimating}
             >
               <span className="btn-sparkle">⚡</span>
-              <span>Initiate Reaction</span>
+              <span>{isAnimating ? 'Simulating...' : 'Initiate Reaction'}</span>
             </button>
             <button
               type="button"
@@ -286,7 +417,49 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
           </div>
         </div>
 
-        {/* Stoichiometric Particle Ratio Bar ("Kitne Element Se Kitne Bante Hain") */}
+        {/* 5-Phase Sequential Stepper */}
+        <div className="reaction-phase-stepper" aria-label="Reaction animation progress stepper">
+          <div className={`stepper-step ${getStepState(1)}`}>
+            <span className="step-num">1</span>
+            <span className="step-text">Prepare</span>
+          </div>
+          <div className="stepper-connector" />
+          <div className={`stepper-step ${getStepState(2)}`}>
+            <span className="step-num">2</span>
+            <span className="step-text">Detach</span>
+          </div>
+          <div className="stepper-connector" />
+          <div className={`stepper-step ${getStepState(3)}`}>
+            <span className="step-num">3</span>
+            <span className="step-text">Transfer</span>
+          </div>
+          <div className="stepper-connector" />
+          <div className={`stepper-step ${getStepState(4)}`}>
+            <span className="step-num">4</span>
+            <span className="step-text">Octet</span>
+          </div>
+          <div className="stepper-connector" />
+          <div className={`stepper-step ${getStepState(5)}`}>
+            <span className="step-num">5</span>
+            <span className="step-text">{reaction.isReactive ? 'Bond Formed' : 'Repelled'}</span>
+          </div>
+        </div>
+
+        {/* Live Narrative Mechanism Banner */}
+        <div className={`phase-narrative-banner ${animPhase}`}>
+          <span className="narrative-badge">
+            {animPhase === 'idle' && '🔬 Standby'}
+            {animPhase === 'phase1_prep' && '🔍 1. Preparation'}
+            {animPhase === 'phase2_detach' && '⚡ 2. Ionization'}
+            {animPhase === 'phase3_transfer' && '🚀 3. Trajectory'}
+            {animPhase === 'phase4_accept' && '✨ 4. Octet Complete'}
+            {animPhase === 'phase5_bond' && (reaction.isReactive ? '💎 5. Bond Locked' : '🛑 Repulsion')}
+            {animPhase === 'rejected' && '🛑 Repulsion'}
+          </span>
+          <span className="narrative-message">{getNarrativeMessage()}</span>
+        </div>
+
+        {/* Stoichiometric Particle Ratio Bar */}
         <div className="stoichiometry-particle-bar">
           <div className="particle-reactants-side">
             <span className="particle-side-title">Reactant Atoms In:</span>
@@ -317,11 +490,11 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
         </div>
 
         {/* Dynamic Multi-Atom Molecular Assembly Arena */}
-        <div className={`reaction-arena ${animStage}`}>
+        <div className={`reaction-arena ${animPhase}`}>
           <div className="arena-grid-overlay" aria-hidden="true" />
 
           {/* Connected Chemical Bond Lines (Visible when bonded) */}
-          {animStage === 'bonded' && assemblyPlan.bonds.length > 0 && (
+          {animPhase === 'phase5_bond' && isCovalent && assemblyPlan.bonds.length > 0 && (
             <svg className="arena-bonds-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
               <defs>
                 <linearGradient id="bondGlowGrad" x1="0" y1="0" x2="1" y2="1">
@@ -379,117 +552,142 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
             </svg>
           )}
 
-          {/* Constituent Moving Atoms */}
+          {/* Continuous Electron Transfer Trajectory Arc & Coulomb Field Lines */}
+          {isIonic && (
+            <ElectronTransferArc
+              phase={animPhase}
+              startX={donorNode.startX}
+              startY={donorNode.startY}
+              endX={acceptorNode.startX}
+              endY={acceptorNode.startY}
+              donorSymbol={donorNode.symbol}
+              acceptorSymbol={acceptorNode.symbol}
+            />
+          )}
+
+          {/* Constituent Moving Atoms with full Bohr Concentric Shells */}
           {assemblyPlan.atoms.map((atom) => {
             const coords = getAtomCoords(atom);
-            const catInfo = CATEGORIES[atom.category] || CATEGORIES['unknown'];
+            const catInfo = CATEGORIES[atom.category as ElementCategory] || CATEGORIES['unknown'];
             const atomColors = theme === 'dark' ? catInfo.colorDark : catInfo.colorLight;
-            const shells = getBohrShells(atom.atomicNumber);
+            const originalShells = ELEMENT_SHELLS[atom.atomicNumber] || getBohrShells(atom.atomicNumber);
+
+            const isNodeDonor = isIonic && atom.symbol === donorSymbol;
+            const isNodeAcceptor = isIonic && atom.symbol === acceptorSymbol;
+
+            // Phase 1: Outermost shell highlight
+            const isHighlighted = animPhase === 'phase1_prep';
+
+            // Phase 2+: Donor valence electron detaches
+            const hideDetachedValenceElectron =
+              isNodeDonor &&
+              (animPhase === 'phase2_detach' ||
+                animPhase === 'phase3_transfer' ||
+                animPhase === 'phase4_accept' ||
+                animPhase === 'phase5_bond');
+
+            // Phase 3+: Donor empty 3rd shell is hidden
+            const hideOutermostShell =
+              isNodeDonor &&
+              (animPhase === 'phase3_transfer' ||
+                animPhase === 'phase4_accept' ||
+                animPhase === 'phase5_bond');
+
+            // Phase 4+: Acceptor outer shell octet complete glow
+            const octetCompleteGlow =
+              isNodeAcceptor &&
+              (animPhase === 'phase4_accept' || animPhase === 'phase5_bond');
+
+            // Dynamic Shell Configuration per phase
+            const effectiveShells = [...originalShells];
+            if (isNodeAcceptor && (animPhase === 'phase4_accept' || animPhase === 'phase5_bond')) {
+              const lastIdx = effectiveShells.length - 1;
+              effectiveShells[lastIdx] = Math.min(8, effectiveShells[lastIdx] + 1);
+            }
+
+            // Charge badge timing
+            let chargeBadge: string | null = null;
+            if (isNodeDonor && hideDetachedValenceElectron) {
+              chargeBadge = atom.chargeSign || '+';
+            } else if (isNodeAcceptor && (animPhase === 'phase4_accept' || animPhase === 'phase5_bond')) {
+              chargeBadge = atom.chargeSign || '−';
+            }
+
+            // Live config note
+            let configNote: string | null = null;
+            if (isNodeDonor) {
+              if (animPhase === 'phase1_prep') {
+                configNote = 'Valence shell (1 e⁻) ready';
+              } else if (animPhase === 'phase2_detach') {
+                configNote = 'e⁻ detaching → +1 ion';
+              } else if (hideOutermostShell) {
+                configNote = `${atom.symbol}⁺ Ion: Stable Octet`;
+              }
+            } else if (isNodeAcceptor) {
+              if (animPhase === 'phase1_prep') {
+                configNote = 'Needs 1 e⁻ for octet';
+              } else if (octetCompleteGlow) {
+                configNote = `${atom.symbol}⁻ Ion: Complete Octet!`;
+              }
+            }
 
             return (
               <div
                 key={atom.id}
-                className={`assembly-atom-node ${atom.role} ${animStage} ${animStage === 'rejected' ? 'atom-rejected-bounce' : ''}`}
+                className={`assembly-atom-node ${atom.role} ${animPhase} ${
+                  animPhase === 'rejected' ? 'atom-rejected-bounce' : ''
+                }`}
                 style={{
                   left: `${coords.x}%`,
                   top: `${coords.y}%`,
-                  '--atom-theme-border': atomColors.border,
-                  '--atom-theme-bg': atomColors.bg,
-                } as React.CSSProperties}
+                }}
               >
-                {/* Bohr Orbital Rings */}
-                <div className="atom-orbital-rings-wrap" aria-hidden="true">
-                  {shells.map((_count, idx) => {
-                    const isOuter = idx === shells.length - 1;
-                    const ringSize = atom.radius * 2 + idx * 16;
-                    return (
-                      <div
-                        key={idx}
-                        className={`orbital-orbit-ring ${isOuter ? 'outer-valence-orbit' : ''}`}
-                        style={{
-                          width: `${ringSize}px`,
-                          height: `${ringSize}px`,
-                          borderColor: atomColors.border,
-                        }}
-                      >
-                        {/* Dot on valence ring */}
-                        {isOuter && (
-                          <span
-                            className="orbiting-valence-dot"
-                            style={{ backgroundColor: atomColors.border }}
-                          />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Nucleus Core */}
-                <div
-                  className="atom-nucleus-core"
-                  style={{
-                    width: `${atom.radius * 1.5}px`,
-                    height: `${atom.radius * 1.5}px`,
-                    backgroundColor: atomColors.bg,
-                    borderColor: atomColors.border,
+                <BohrAtomModel
+                  symbol={atom.symbol}
+                  name={atom.name}
+                  atomicNumber={atom.atomicNumber}
+                  shells={effectiveShells}
+                  themeColors={{
+                    bg: atomColors.bg,
+                    border: atomColors.border,
+                    accent: atomColors.accent,
+                    text: atomColors.text,
                   }}
-                >
-                  <span className="node-atom-num">#{atom.atomicNumber}</span>
-                  <span className="node-atom-sym">{atom.symbol}</span>
-                  <span className="node-atom-name">{atom.name}</span>
-                </div>
-
-                {/* Charge badge on bonded ionic atom */}
-                {animStage === 'bonded' && atom.chargeSign && (
-                  <span className={`node-charge-pill ${atom.chargeSign === '+' ? 'pos' : 'neg'}`}>
-                    {atom.chargeSign}
-                  </span>
-                )}
+                  isHighlighted={isHighlighted}
+                  hideOutermostShell={hideOutermostShell}
+                  hideDetachedValenceElectron={hideDetachedValenceElectron}
+                  octetCompleteGlow={octetCompleteGlow}
+                  chargeBadge={chargeBadge}
+                  size={200}
+                  role={isNodeDonor ? 'donor' : isNodeAcceptor ? 'acceptor' : 'neutral'}
+                  configNote={configNote}
+                />
               </div>
             );
           })}
 
-          {/* Center Interaction Zone (Electron Leap, Repulsion, or Molecular Form) */}
+          {/* Center Interaction Zone (Repulsion Barrier, Exothermic Flash, Compound Stamp) */}
           <div className="arena-center-zone">
-            {/* Parabolic Ring-to-Ring Electron Leap Arc */}
-            {animStage === 'interacting' && reaction.outcome === 'IONIC_BOND' && (
-              <div className="electron-leap-wrapper" aria-hidden="true">
-                <svg className="leap-trajectory-svg" viewBox="0 0 320 120">
-                  <path
-                    d="M 40 60 Q 160 -10 280 60"
-                    fill="none"
-                    stroke="#f59e0b"
-                    strokeWidth="2.5"
-                    strokeDasharray="6 4"
-                    className="trajectory-path"
-                  />
-                </svg>
-                <div className="flying-valence-electron">
-                  <span className="flying-dot">e⁻</span>
-                  <span className="sparkle-spark">✦</span>
-                </div>
-              </div>
-            )}
-
             {/* Repulsion Forcefield Barrier */}
-            {(animStage === 'interacting' || animStage === 'rejected') && !reaction.isReactive && (
-              <div className="repulsion-forcefield-container">
-                <div className="forcefield-wave wave-1" />
-                <div className="forcefield-wave wave-2" />
-                <div className="forcefield-barrier">
-                  <span className="barrier-icon">🛡️</span>
-                  <span className="barrier-text">ELECTROSTATIC REPULSION</span>
+            {(animPhase === 'phase3_transfer' || animPhase === 'phase4_accept' || animPhase === 'rejected') &&
+              !reaction.isReactive && (
+                <div className="repulsion-forcefield-container">
+                  <div className="forcefield-wave wave-1" />
+                  <div className="forcefield-wave wave-2" />
+                  <div className="forcefield-barrier">
+                    <span className="barrier-icon">🛡️</span>
+                    <span className="barrier-text">ELECTROSTATIC REPULSION</span>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Exothermic Bond Flash */}
-            {animStage === 'bonded' && reaction.isReactive && (
+            {animPhase === 'phase5_bond' && reaction.isReactive && (
               <div className="exothermic-flash-ring" />
             )}
 
             {/* Assembled Compound Badge */}
-            {animStage === 'bonded' && (
+            {animPhase === 'phase5_bond' && reaction.isReactive && (
               <div className="arena-result-stamp stamp-bonded">
                 <span className="stamp-icon">✨</span>
                 <span className="stamp-formula">{reaction.compoundFormula}</span>
@@ -497,7 +695,7 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
               </div>
             )}
 
-            {animStage === 'rejected' && (
+            {animPhase === 'rejected' && (
               <div className="arena-result-stamp stamp-rejected">
                 <span className="stamp-icon">🛑</span>
                 <span className="stamp-formula">NO MOLECULE FORMED</span>
@@ -514,18 +712,18 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
             <span className="ledger-text">
               {reaction.valenceDetails.transferType === 'leap' && (
                 <>
-                  ⚡ <strong>Atoms move together:</strong> {reaction.valenceDetails.donorShellFrom} leaps into{' '}
-                  <strong>{reaction.valenceDetails.acceptorShellTo}</strong>, creating ionic lattice units!
+                  ⚡ <strong>Electrostatic Coulomb Transfer:</strong> {reaction.valenceDetails.donorShellFrom} detaches and transfers to{' '}
+                  <strong>{reaction.valenceDetails.acceptorShellTo}</strong>, creating oppositely charged ions bound into an ionic crystal!
                 </>
               )}
               {reaction.valenceDetails.transferType === 'share' && (
                 <>
-                  🤝 <strong>Atoms assemble & dock:</strong> Rings overlap sharing {reaction.valenceDetails.electronCount} valence electron pairs into a single molecule!
+                  🤝 <strong>Molecular Orbital Sharing:</strong> Valence shells overlap sharing {reaction.valenceDetails.electronCount} electron pairs between nuclei without ionization!
                 </>
               )}
               {reaction.valenceDetails.transferType === 'repel' && (
                 <>
-                  🛑 <strong>Collision Repelled:</strong> Atoms approach but bounce off elastically ({reaction.valenceDetails.acceptorShellTo})!
+                  🛑 <strong>Collision Repelled:</strong> Stable valence octets/electron clouds repel each other ({reaction.valenceDetails.acceptorShellTo})!
                 </>
               )}
             </span>

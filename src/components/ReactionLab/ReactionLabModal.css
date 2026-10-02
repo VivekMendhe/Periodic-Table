@@ -231,6 +231,134 @@
 }
 
 /* ==========================================================
+   5-Phase Reaction Stepper & Live Narrative Banner
+   ========================================================== */
+.reaction-phase-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
+}
+
+.stepper-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px;
+  border-radius: 20px;
+  background: var(--surface-primary);
+  border: 1px solid var(--border-color);
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.stepper-step.active {
+  background: rgba(14, 165, 233, 0.16);
+  border-color: #0ea5e9;
+  color: #38bdf8;
+  font-weight: 800;
+  box-shadow: 0 0 12px rgba(14, 165, 233, 0.35);
+}
+
+.stepper-step.completed {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: #10b981;
+  color: #34d399;
+}
+
+.step-num {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  font-weight: 800;
+  background: var(--bg-tertiary);
+}
+
+.stepper-step.active .step-num {
+  background: #0ea5e9;
+  color: #ffffff;
+}
+
+.stepper-step.completed .step-num {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.stepper-connector {
+  width: 14px;
+  height: 2px;
+  background: var(--border-color);
+  flex-shrink: 0;
+}
+
+/* Dynamic Live Narrative Notification Banner */
+.phase-narrative-banner {
+  padding: 9px 20px;
+  background: rgba(15, 23, 42, 0.95);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.76rem;
+  transition: all 0.3s ease;
+}
+
+.narrative-badge {
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 12px;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: rgba(56, 189, 248, 0.18);
+  border: 1px solid #38bdf8;
+  color: #38bdf8;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.phase-narrative-banner.phase2_detach .narrative-badge {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+
+.phase-narrative-banner.phase3_transfer .narrative-badge {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: #818cf8;
+  color: #a5b4fc;
+}
+
+.phase-narrative-banner.phase4_accept .narrative-badge,
+.phase-narrative-banner.phase5_bond .narrative-badge {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #34d399;
+}
+
+.phase-narrative-banner.rejected .narrative-badge {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #f87171;
+}
+
+.narrative-message {
+  color: #e2e8f0;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+/* ==========================================================
    Stoichiometric Particle Ratio Bar ("Kitne Se Kitne")
    ========================================================== */
 .stoichiometry-particle-bar {
@@ -329,7 +457,7 @@
    ========================================================== */
 .reaction-arena {
   position: relative;
-  height: 250px;
+  height: 340px;
   background: radial-gradient(circle at center, #0f172a 0%, #030712 100%);
   border-bottom: 1px solid var(--border-color);
   overflow: hidden;
@@ -374,7 +502,12 @@
   justify-content: center;
   z-index: 10;
   transition: left 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
-              top 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+              top 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
+              transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.assembly-atom-node.phase1_prep {
+  transform: translate(-50%, -50%) scale(1.06);
 }
 
 .atom-orbital-rings-wrap {

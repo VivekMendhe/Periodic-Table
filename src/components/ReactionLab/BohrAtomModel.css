@@ -1,0 +1,264 @@
+/* Bohr Atom SVG & Orbit Animations */
+
+.bohr-atom-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  user-select: none;
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.bohr-atom-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.35));
+}
+
+/* Concentric Shell Rings */
+.bohr-shell-track {
+  fill: none;
+  stroke: var(--atom-border, rgba(56, 189, 248, 0.35));
+  stroke-width: 1.4;
+  transition: stroke 0.4s ease, stroke-width 0.4s ease, opacity 0.5s ease;
+}
+
+.bohr-shell-track.outermost-shell {
+  stroke-width: 1.8;
+  stroke: var(--atom-border, #38bdf8);
+  opacity: 0.85;
+}
+
+.bohr-shell-track.highlight-outer {
+  stroke: #38bdf8;
+  stroke-width: 2.6;
+  filter: drop-shadow(0 0 10px #38bdf8);
+  animation: shellGlowPulse 1.2s ease-in-out infinite alternate;
+}
+
+.bohr-shell-track.octet-complete {
+  stroke: #10b981;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 16px #34d399);
+  animation: octetPulseBurst 1.2s ease-out infinite;
+}
+
+.bohr-shell-track.fading-empty {
+  opacity: 0;
+  stroke-dasharray: 4 4;
+  transform: scale(0.85);
+  transform-origin: center;
+  transition: all 0.8s ease-out;
+}
+
+/* Shell letter markers (K, L, M) */
+.shell-letter-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8.5px;
+  font-weight: 700;
+  fill: var(--text-tertiary, #94a3b8);
+  opacity: 0.75;
+}
+
+/* Orbiting Electron Group */
+.bohr-orbit-rotator {
+  transform-origin: 110px 110px;
+}
+
+/* Individual Electron Dots */
+.bohr-electron-dot {
+  fill: var(--atom-electron-fill, #38bdf8);
+  filter: drop-shadow(0 0 4px var(--atom-electron-glow, #38bdf8));
+  transition: fill 0.3s ease;
+}
+
+.bohr-electron-dot.valence-electron {
+  fill: #f59e0b;
+  filter: drop-shadow(0 0 7px #fbbf24);
+}
+
+.bohr-electron-dot.valence-highlight {
+  fill: #fbbf24;
+  filter: drop-shadow(0 0 10px #f59e0b) drop-shadow(0 0 18px #d97706);
+  animation: electronValencePop 0.8s ease-in-out infinite alternate;
+}
+
+.bohr-electron-dot.new-octet-electron {
+  fill: #34d399;
+  filter: drop-shadow(0 0 10px #10b981);
+  animation: newElectronEnter 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+/* Nucleus Core */
+.bohr-nucleus-circle {
+  transition: all 0.4s ease;
+  filter: drop-shadow(0 0 12px var(--atom-border, rgba(56, 189, 248, 0.5)));
+}
+
+.bohr-nucleus-sym {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 900;
+  fill: #ffffff;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.bohr-nucleus-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7.5px;
+  font-weight: 700;
+  fill: rgba(255, 255, 255, 0.85);
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.bohr-nucleus-name {
+  font-family: inherit;
+  font-size: 6.5px;
+  font-weight: 700;
+  fill: rgba(255, 255, 255, 0.9);
+  text-anchor: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+}
+
+/* Charge Pill Badge */
+.bohr-charge-badge {
+  filter: drop-shadow(0 0 8px currentColor);
+  animation: badgePopIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.bohr-charge-badge.charge-pos {
+  fill: #3b82f6;
+  stroke: #93c5fd;
+  stroke-width: 1.5;
+}
+
+.bohr-charge-badge.charge-neg {
+  fill: #10b981;
+  stroke: #6ee7b7;
+  stroke-width: 1.5;
+}
+
+.bohr-charge-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 900;
+  fill: #ffffff;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+/* Live Configuration Pill Below Atom */
+.bohr-config-pill {
+  margin-top: 6px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid var(--border-color, rgba(148, 163, 184, 0.25));
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  max-width: 180px;
+  text-align: center;
+}
+
+.bohr-config-numbers {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.04em;
+}
+
+.bohr-config-sub {
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: var(--text-tertiary, #94a3b8);
+  white-space: nowrap;
+}
+
+.bohr-config-sub.highlight-sub {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+.bohr-config-sub.octet-sub {
+  color: #34d399;
+  font-weight: 700;
+}
+
+/* Animations */
+@keyframes shellGlowPulse {
+  0% {
+    stroke-width: 2;
+    filter: drop-shadow(0 0 6px #38bdf8);
+    opacity: 0.85;
+  }
+  100% {
+    stroke-width: 3.2;
+    filter: drop-shadow(0 0 16px #0ea5e9) drop-shadow(0 0 24px #38bdf8);
+    opacity: 1;
+  }
+}
+
+@keyframes octetPulseBurst {
+  0% {
+    stroke-width: 2.2;
+    filter: drop-shadow(0 0 8px #10b981);
+  }
+  50% {
+    stroke-width: 3.8;
+    filter: drop-shadow(0 0 22px #34d399) drop-shadow(0 0 30px #10b981);
+  }
+  100% {
+    stroke-width: 2.2;
+    filter: drop-shadow(0 0 8px #10b981);
+  }
+}
+
+@keyframes electronValencePop {
+  0% {
+    r: 3.2;
+    filter: drop-shadow(0 0 5px #f59e0b);
+  }
+  100% {
+    r: 4.6;
+    filter: drop-shadow(0 0 14px #fbbf24) drop-shadow(0 0 22px #f59e0b);
+  }
+}
+
+@keyframes newElectronEnter {
+  0% {
+    r: 0;
+    opacity: 0;
+  }
+  60% {
+    r: 5.5;
+    opacity: 1;
+  }
+  100% {
+    r: 3.4;
+    opacity: 1;
+  }
+}
+
+@keyframes badgePopIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

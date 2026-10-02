@@ -880,7 +880,7 @@ export function generateAtomAssemblyLayout(
     };
   }
 
-  // Table Salt NaCl (2 Na + 2 Cl or 1:1 pair)
+  // Table Salt NaCl (1 Na + 1 Cl)
   if (
     (elemA.symbol === 'Na' && elemB.symbol === 'Cl') ||
     (elemA.symbol === 'Cl' && elemB.symbol === 'Na')
@@ -898,11 +898,11 @@ export function generateAtomAssemblyLayout(
           atomicNumber: 11,
           category: naElem.category,
           role: isA_Na ? 'reactantA' : 'reactantB',
-          startX: isA_Na ? 18 : 82,
-          startY: 34,
-          bondedX: 38,
-          bondedY: 38,
-          radius: 28,
+          startX: isA_Na ? 26 : 74,
+          startY: 50,
+          bondedX: isA_Na ? 41 : 59,
+          bondedY: 50,
+          radius: 30,
           chargeSign: '+',
         },
         {
@@ -912,45 +912,16 @@ export function generateAtomAssemblyLayout(
           atomicNumber: 17,
           category: clElem.category,
           role: isA_Na ? 'reactantB' : 'reactantA',
-          startX: isA_Na ? 82 : 18,
-          startY: 34,
-          bondedX: 52,
-          bondedY: 38,
-          radius: 32,
-          chargeSign: '−',
-        },
-        {
-          id: 'na2',
-          symbol: 'Na',
-          name: 'Sodium',
-          atomicNumber: 11,
-          category: naElem.category,
-          role: isA_Na ? 'reactantA' : 'reactantB',
-          startX: isA_Na ? 18 : 82,
-          startY: 66,
-          bondedX: 48,
-          bondedY: 66,
-          radius: 28,
-          chargeSign: '+',
-        },
-        {
-          id: 'cl2',
-          symbol: 'Cl',
-          name: 'Chlorine',
-          atomicNumber: 17,
-          category: clElem.category,
-          role: isA_Na ? 'reactantB' : 'reactantA',
-          startX: isA_Na ? 82 : 18,
-          startY: 66,
-          bondedX: 62,
-          bondedY: 66,
+          startX: isA_Na ? 74 : 26,
+          startY: 50,
+          bondedX: isA_Na ? 59 : 41,
+          bondedY: 50,
           radius: 32,
           chargeSign: '−',
         },
       ],
       bonds: [
         { id: 'b1', fromAtomId: 'na1', toAtomId: 'cl1' },
-        { id: 'b2', fromAtomId: 'na2', toAtomId: 'cl2' },
       ],
     };
   }
@@ -966,9 +937,9 @@ export function generateAtomAssemblyLayout(
           atomicNumber: elemA.atomicNumber,
           category: elemA.category,
           role: 'reactantA',
-          startX: 20,
+          startX: 26,
           startY: 50,
-          bondedX: 10, // Bounced back!
+          bondedX: 12, // Bounced back!
           bondedY: 50,
           radius: 32,
         },
@@ -979,9 +950,9 @@ export function generateAtomAssemblyLayout(
           atomicNumber: elemB.atomicNumber,
           category: elemB.category,
           role: 'reactantB',
-          startX: 80,
+          startX: 74,
           startY: 50,
-          bondedX: 90, // Bounced back!
+          bondedX: 88, // Bounced back!
           bondedY: 50,
           radius: 32,
         },
@@ -1001,9 +972,9 @@ export function generateAtomAssemblyLayout(
         atomicNumber: elemA.atomicNumber,
         category: elemA.category,
         role: 'reactantA',
-        startX: 22,
+        startX: 26,
         startY: 50,
-        bondedX: 43,
+        bondedX: 41,
         bondedY: 50,
         radius: 30,
         chargeSign: isIonic ? (donorIsA ? '+' : '−') : undefined,
@@ -1015,9 +986,9 @@ export function generateAtomAssemblyLayout(
         atomicNumber: elemB.atomicNumber,
         category: elemB.category,
         role: 'reactantB',
-        startX: 78,
+        startX: 74,
         startY: 50,
-        bondedX: 57,
+        bondedX: 59,
         bondedY: 50,
         radius: 32,
         chargeSign: isIonic ? (donorIsA ? '−' : '+') : undefined,
