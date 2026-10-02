@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ElementData, ElementCategory } from '../../types/element';
+import type { ElementData, ElementCategory, ColorMode } from '../../types/element';
 import { ElementGrid } from './ElementGrid';
 import './PeriodicTable.css';
 
@@ -11,6 +11,8 @@ interface PeriodicTableProps {
   onSelectElement: (element: ElementData) => void;
   onSelectCategory: (category: ElementCategory | 'all') => void;
   theme?: 'light' | 'dark';
+  colorMode?: ColorMode;
+  currentTempK?: number;
 }
 
 export const PeriodicTable: React.FC<PeriodicTableProps> = (props) => {

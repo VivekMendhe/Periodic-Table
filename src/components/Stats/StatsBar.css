@@ -101,6 +101,8 @@
 
 .category-dropdown {
   appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   background: var(--surface-primary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
@@ -112,7 +114,14 @@
   box-shadow: var(--shadow-sm);
   outline: none;
   font-family: inherit;
+  color-scheme: inherit;
   transition: all 0.2s ease;
+}
+
+.category-dropdown option {
+  background: var(--surface-primary);
+  color: var(--text-primary);
+  padding: 8px 12px;
 }
 
 .category-dropdown:hover {

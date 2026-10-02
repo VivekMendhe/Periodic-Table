@@ -161,7 +161,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <li>Category filtering with color-coded scientific distinctions</li>
                 <li>Full keyboard accessibility (WCAG 2.1) and Light/Dark themes</li>
               </ul>
-              <p className="modal-version-tag">Version 1.0.0 • Built with React 19, TypeScript, and Vite</p>
+              <p className="modal-version-tag">Version 1.0.0 • Interactive Chemistry Periodic Table Explorer</p>
             </div>
             <div className="simple-modal-footer">
               <button

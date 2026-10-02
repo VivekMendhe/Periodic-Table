@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import type { ElementData, ColorMode, ElementCategory } from './types/element';
 import { ELEMENTS, validateElements } from './data/elements';
 import { useElementSearch } from './hooks/useElementSearch';
 import { Header } from './components/Header/Header';
@@ -8,6 +9,9 @@ import { PeriodicTable } from './components/PeriodicTable/PeriodicTable';
 import { CategoryLegend } from './components/PeriodicTable/CategoryLegend';
 import { KeyFeatures } from './components/Features/KeyFeatures';
 import { ElementModal } from './components/ElementDetails/ElementModal';
+import { PeriodicTableControls } from './components/Controls/PeriodicTableControls';
+import { TemperatureControl } from './components/Controls/TemperatureControl';
+import { ElementCompareModal } from './components/Compare/ElementCompareModal';
 import './App.css';
 
 // Run development validation once
@@ -37,9 +41,9 @@ export function App() {
     localStorage.setItem('pt-theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
-  };
+  }, []);
 
   // Search and filter state hook
   const {
@@ -54,6 +58,64 @@ export function App() {
     isFilteringActive,
     resetFilters,
   } = useElementSearch({ elements: ELEMENTS });
+
+  // Interactive controls states
+  const [colorMode, setColorMode] = useState<ColorMode>('category');
+  const [temperatureK, setTemperatureK] = useState<number>(293.15); // 20 °C room temp
+  const [tempUnit, setTempUnit] = useState<'K' | 'C'>('K');
+  const [isTempOpen, setIsTempOpen] = useState<boolean>(false);
+
+  // Compare modal states
+  const [isCompareOpen, setIsCompareOpen] = useState<boolean>(false);
+  const [compareElemA, setCompareElemA] = useState<ElementData | null>(null);
+  const [compareElemB, setCompareElemB] = useState<ElementData | null>(null);
+
+  // Stable event handlers for performance
+  const handleSelectElement = useCallback((element: ElementData) => {
+    setSelectedElement(element);
+  }, [setSelectedElement]);
+
+  const handleCloseModal = useCallback(() => {
+    setSelectedElement(null);
+  }, [setSelectedElement]);
+
+  const handleSelectCategory = useCallback((cat: ElementCategory | 'all') => {
+    setSelectedCategory(cat);
+  }, [setSelectedCategory]);
+
+  const handleSelectColorMode = useCallback((mode: ColorMode) => {
+    setColorMode(mode);
+    if (mode === 'phase') {
+      setIsTempOpen(true);
+    }
+  }, []);
+
+  const handleToggleTemp = useCallback(() => {
+    setIsTempOpen((prev) => !prev);
+  }, []);
+
+  const handleToggleTempUnit = useCallback(() => {
+    setTempUnit((prev) => (prev === 'K' ? 'C' : 'K'));
+  }, []);
+
+  const handleOpenCompareGlobal = useCallback(() => {
+    setCompareElemA(null);
+    setCompareElemB(null);
+    setIsCompareOpen(true);
+  }, []);
+
+  const handleOpenCompareFromModal = useCallback((elem: ElementData) => {
+    setSelectedElement(null);
+    setCompareElemA(elem);
+    // Suggest next element or noble gas
+    const nextElem = ELEMENTS.find((e) => e.atomicNumber === (elem.atomicNumber === 118 ? 1 : elem.atomicNumber + 1)) || null;
+    setCompareElemB(nextElem);
+    setIsCompareOpen(true);
+  }, [setSelectedElement]);
+
+  const handleCloseCompare = useCallback(() => {
+    setIsCompareOpen(false);
+  }, []);
 
   return (
     <div className="app-layout">
@@ -82,8 +144,28 @@ export function App() {
             totalGroups={18}
             totalCategories={10}
             selectedCategory={selectedCategory}
-            onSelectCategory={setSelectedCategory}
+            onSelectCategory={handleSelectCategory}
           />
+
+          {/* Interactive Controls: Color Mode, Temperature Toggle, Compare Elements */}
+          <PeriodicTableControls
+            colorMode={colorMode}
+            onSelectColorMode={handleSelectColorMode}
+            isTempOpen={isTempOpen}
+            onToggleTemp={handleToggleTemp}
+            onOpenCompare={handleOpenCompareGlobal}
+          />
+
+          {/* Collapsible Temperature Simulator */}
+          {isTempOpen && (
+            <TemperatureControl
+              temperatureK={temperatureK}
+              onTemperatureChange={setTemperatureK}
+              unit={tempUnit}
+              onToggleUnit={handleToggleTempUnit}
+              elements={ELEMENTS}
+            />
+          )}
 
           {/* Periodic Table View */}
           <PeriodicTable
@@ -91,9 +173,11 @@ export function App() {
             activeElementIds={activeElementIds}
             isFilteringActive={isFilteringActive}
             selectedElement={selectedElement}
-            onSelectElement={setSelectedElement}
-            onSelectCategory={setSelectedCategory}
+            onSelectElement={handleSelectElement}
+            onSelectCategory={handleSelectCategory}
             theme={theme}
+            colorMode={colorMode}
+            currentTempK={temperatureK}
           />
 
           {/* Bottom Row: Category Legend & Key Features */}
@@ -101,7 +185,7 @@ export function App() {
             <div className="bottom-left-col">
               <CategoryLegend
                 selectedCategory={selectedCategory}
-                onSelectCategory={setSelectedCategory}
+                onSelectCategory={handleSelectCategory}
                 onResetFilters={resetFilters}
                 isFilteringActive={isFilteringActive}
                 theme={theme}
@@ -117,7 +201,7 @@ export function App() {
         <footer className="app-footer">
           <div className="footer-content">
             <p className="footer-credit">
-              <strong>Periodic Table of Elements</strong> • Built with React, TypeScript & CSS Grid • Scientifically accurate data based on IUPAC & NIST standards.
+              <strong>Periodic Table of Elements</strong> • Interactive Chemical Explorer • Scientifically accurate data based on IUPAC & NIST standards.
             </p>
             <p className="footer-subtext">
               Designed for chemistry students, researchers, educators, and curious minds worldwide.
@@ -129,7 +213,18 @@ export function App() {
       {/* Detail Modal */}
       <ElementModal
         element={selectedElement}
-        onClose={() => setSelectedElement(null)}
+        onClose={handleCloseModal}
+        theme={theme}
+        onOpenCompare={handleOpenCompareFromModal}
+      />
+
+      {/* Side-by-Side Compare Modal */}
+      <ElementCompareModal
+        isOpen={isCompareOpen}
+        onClose={handleCloseCompare}
+        elements={ELEMENTS}
+        initialElementA={compareElemA}
+        initialElementB={compareElemB}
         theme={theme}
       />
     </div>

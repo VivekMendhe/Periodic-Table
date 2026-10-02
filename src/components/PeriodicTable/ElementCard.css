@@ -15,6 +15,8 @@
   outline: none;
   text-align: center;
   user-select: none;
+  contain: layout paint;
+  will-change: transform;
   transition: transform 0.16s cubic-bezier(0.4, 0, 0.2, 1),
               box-shadow 0.16s cubic-bezier(0.4, 0, 0.2, 1),
               opacity 0.2s ease,
@@ -55,15 +57,33 @@
   transform: translateY(-1px) scale(1.02);
 }
 
+.element-card-top-row {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2px;
+  line-height: 1;
+}
+
 .element-atomic-number {
-  align-self: flex-start;
   font-size: 0.68rem;
   font-weight: 700;
   color: var(--element-text);
   line-height: 1;
-  padding-left: 2px;
   font-family: 'JetBrains Mono', monospace;
-  opacity: 0.85;
+  opacity: 0.9;
+}
+
+.element-mode-badge {
+  font-size: 0.58rem;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--element-border);
+  color: var(--element-text);
+  padding: 1px 3px;
+  border-radius: 3px;
+  line-height: 1;
 }
 
 .element-symbol {

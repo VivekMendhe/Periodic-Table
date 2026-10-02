@@ -1,23 +1,24 @@
 # Periodic-Table 🧪
 
-An interactive, responsive, and modern **Periodic Table of Elements** web application built with **React 19**, **TypeScript**, and **Vite**.
+An interactive, responsive, and modern **Periodic Table of Elements** web application built with **TypeScript**, **CSS Grid**, and **Vite**.
 
 ## ✨ Features
 
 - **Complete Element Dataset**: All 118 elements verified according to IUPAC & NIST scientific standards.
 - **Interactive Periodic Table Grid**: Standard 18-column grid with Lanthanides and Actinides separated below.
 - **Smart Search & Filter**: Search elements dynamically by name, chemical symbol, or atomic number.
-- **Category Highlighting**: Filter by chemical series (Alkali Metals, Alkaline Earth, Transition Metals, Lanthanides, Actinides, Metalloids, Nonmetals, Halogens, Noble Gases).
+- **Live Temperature Simulator**: Interactive thermal slider from 0 K to 6000 K showing real-time states of matter.
+- **Multiple Color Modes**: Visualize by Category, Orbital Block (s, p, d, f), Phase, or Electronegativity heatmap.
+- **Side-by-Side Element Comparator**: Compare any two chemical elements side-by-side.
 - **Detailed Element Modal**: Click on any element to view in-depth chemical and physical properties:
-  - Atomic weight, electron configuration, electronegativity
+  - Atomic weight, electron configuration, Bohr orbital model
   - Melting & boiling points, density, oxidation states
-  - Period, group, block, discovery year, and discovered by
+  - Period, group, block, discovery year, and real-world applications
 - **Dark / Light Mode**: Seamless theme switching with persistent user preference stored in `localStorage`.
 - **Responsive Layout**: Designed for seamless viewing across desktops, tablets, and mobile screens.
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [React 19](https://react.dev/)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
 - **Build Tool**: [Vite](https://vite.dev/)
 - **Styling**: Modern CSS with CSS Grid & Custom Properties (Variables)

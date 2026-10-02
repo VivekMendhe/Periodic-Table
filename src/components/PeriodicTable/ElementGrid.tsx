@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { ElementData, ElementCategory } from '../../types/element';
+import type { ElementData, ElementCategory, ColorMode } from '../../types/element';
 import { ElementCard } from './ElementCard';
 import './PeriodicTable.css';
 
@@ -11,6 +11,8 @@ interface ElementGridProps {
   onSelectElement: (element: ElementData) => void;
   onSelectCategory: (category: ElementCategory | 'all') => void;
   theme?: 'light' | 'dark';
+  colorMode?: ColorMode;
+  currentTempK?: number;
 }
 
 export const ElementGrid: React.FC<ElementGridProps> = ({
@@ -21,6 +23,8 @@ export const ElementGrid: React.FC<ElementGridProps> = ({
   onSelectElement,
   onSelectCategory,
   theme = 'light',
+  colorMode = 'category',
+  currentTempK = 293.15,
 }) => {
   // Separate elements into main table (periods 1-7, excluding lanthanides & actinides)
   // and f-block (lanthanides 57-71, actinides 89-103)
@@ -95,6 +99,8 @@ export const ElementGrid: React.FC<ElementGridProps> = ({
                 isSelected={isSelected}
                 onClick={onSelectElement}
                 theme={theme}
+                colorMode={colorMode}
+                currentTempK={currentTempK}
               />
             </div>
           );
@@ -165,6 +171,8 @@ export const ElementGrid: React.FC<ElementGridProps> = ({
                 isSelected={isSelected}
                 onClick={onSelectElement}
                 theme={theme}
+                colorMode={colorMode}
+                currentTempK={currentTempK}
               />
             </div>
           );
@@ -198,6 +206,8 @@ export const ElementGrid: React.FC<ElementGridProps> = ({
                 isSelected={isSelected}
                 onClick={onSelectElement}
                 theme={theme}
+                colorMode={colorMode}
+                currentTempK={currentTempK}
               />
             </div>
           );

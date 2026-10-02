@@ -13,7 +13,9 @@ export type ElementCategory =
 
 export type ElementBlock = 's' | 'p' | 'd' | 'f';
 
-export type PhaseAtRoomTemp = 'Solid' | 'Liquid' | 'Gas';
+export type PhaseAtRoomTemp = 'Solid' | 'Liquid' | 'Gas' | 'Unknown';
+
+export type ColorMode = 'category' | 'block' | 'phase' | 'electronegativity';
 
 export interface ElementData {
   atomicNumber: number;
@@ -34,6 +36,11 @@ export interface ElementData {
   discoveryYear: string;
   phaseAtRoomTemperature: PhaseAtRoomTemp;
   description: string;
+  shells?: number[];
+  applications?: string[];
+  funFact?: string;
+  meltingPointKelvin?: number | null;
+  boilingPointKelvin?: number | null;
 }
 
 export interface CategoryInfo {

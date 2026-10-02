@@ -40,6 +40,7 @@
 }
 
 [data-theme='dark'] {
+  color-scheme: dark;
   /* Dark Theme */
   --app-bg: #090d16;
   --surface-primary: #0f172a;
@@ -70,8 +71,31 @@
   --shadow-lg: 0 16px 36px -4px rgba(0, 0, 0, 0.6);
 }
 
+[data-theme='light'] {
+  color-scheme: light;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
+}
+
+select,
+option,
+optgroup {
+  color-scheme: inherit;
+  font-family: inherit;
+}
+
+[data-theme='dark'] select option,
+[data-theme='dark'] select optgroup {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+[data-theme='light'] select option,
+[data-theme='light'] select optgroup {
+  background-color: #ffffff;
+  color: #0f172a;
 }
 
 html {
