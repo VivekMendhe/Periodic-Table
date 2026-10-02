@@ -8,6 +8,13 @@ export type ReactionOutcomeType =
   | 'METALLIC_REPULSION'
   | 'UNFAVORABLE_REPULSION';
 
+export interface ValenceTransferInfo {
+  donorShellFrom: string; // e.g. "Outer 3s¹ ring"
+  acceptorShellTo: string; // e.g. "Outer 3p⁵ → 3p⁶ octet"
+  electronCount: number; // e.g. 1
+  transferType: 'leap' | 'share' | 'repel';
+}
+
 export interface ReactionResult {
   outcome: ReactionOutcomeType;
   isReactive: boolean;
@@ -22,6 +29,12 @@ export interface ReactionResult {
   donorSymbol?: string;
   acceptorSymbol?: string;
   bondOrder?: string;
+  reactantACount: number; // e.g. 2 for 2Na
+  reactantBCount: number; // e.g. 1 for Cl2
+  productCount: number; // e.g. 2 for 2NaCl
+  productUnits: string; // e.g. "2 Units of NaCl"
+  stoichiometryRatioText: string; // e.g. "2 Na + 1 Cl₂ → 2 NaCl (2:1 Ratio)"
+  valenceDetails: ValenceTransferInfo;
 }
 
 export interface ReactionPreset {
@@ -36,71 +49,83 @@ export interface ReactionPreset {
 export const REACTION_PRESETS: ReactionPreset[] = [
   {
     id: 'na-cl',
-    label: 'Na + Cl (Table Salt)',
+    label: 'Na + Cl (Table Salt ⚡)',
     atomANumber: 11, // Sodium
     atomBNumber: 17, // Chlorine
     category: 'ionic',
-    description: 'Vigorous electron transfer forming a crystalline ionic lattice (NaCl).',
+    description: '2 Na atoms + 1 Cl₂ molecule → 2 NaCl crystal units. Outer 3s¹ electron leaps to 3p⁵ shell.',
   },
   {
     id: 'h-o',
-    label: 'H + O (Water)',
+    label: 'H + O (Water 💧)',
     atomANumber: 1, // Hydrogen
     atomBNumber: 8, // Oxygen
     category: 'covalent',
-    description: 'Polar covalent sharing of valence electrons forming H₂O.',
+    description: '2 H atoms + 1 O atom → 1 H₂O molecule. Valence rings overlap to share 2 electron pairs.',
   },
   {
     id: 'c-o',
-    label: 'C + O (Carbon Dioxide)',
+    label: 'C + O (Carbon Dioxide 🌬️)',
     atomANumber: 6, // Carbon
     atomBNumber: 8, // Oxygen
     category: 'covalent',
-    description: 'Double covalent bonds sharing 4 electron pairs forming CO₂.',
+    description: '1 C atom + 2 O atoms → 1 CO₂ molecule. Double covalent sharing across overlapping orbital rings.',
   },
   {
     id: 'mg-o',
-    label: 'Mg + O (Magnesium Oxide)',
+    label: 'Mg + O (Magnesium Oxide 💥)',
     atomANumber: 12, // Magnesium
     atomBNumber: 8, // Oxygen
     category: 'ionic',
-    description: 'Transfer of 2 electrons with intense exothermic brilliant white light (MgO).',
+    description: '2 Mg atoms + 1 O₂ molecule → 2 MgO. 2 electrons leap from 3s² ring to 2p⁴ ring.',
   },
   {
     id: 'he-na',
-    label: 'He + Na (Noble Gas Reject)',
+    label: 'He + Na (Noble Reject 🛡️)',
     atomANumber: 2, // Helium
     atomBNumber: 11, // Sodium
     category: 'repulsion',
-    description: 'Helium has a full duplet shell. Atoms repel each other with an electrostatic bounce.',
+    description: '1 He + 1 Na → 0 Products. Helium has a full duplet shell (1s²). Electron clouds repel with elastic bounce.',
   },
   {
     id: 'ar-fe',
-    label: 'Ar + Fe (Inert Gas Barrier)',
+    label: 'Ar + Fe (Inert Octet 🛑)',
     atomANumber: 18, // Argon
     atomBNumber: 26, // Iron
     category: 'repulsion',
-    description: 'Argon has an ultra-stable filled octet. Zero chemical affinity, resulting in repulsion.',
+    description: '1 Ar + 1 Fe → 0 Products. Complete octet shields Argon; zero chemical affinity.',
   },
   {
     id: 'li-f',
-    label: 'Li + F (Lithium Fluoride)',
+    label: 'Li + F (Max ΔEN ⚡)',
     atomANumber: 3, // Lithium
     atomBNumber: 9, // Fluorine
     category: 'ionic',
-    description: 'Highest electronegativity difference on the periodic table forming ionic LiF.',
+    description: '2 Li atoms + 1 F₂ molecule → 2 LiF. Single 2s¹ valence electron leaps to 2p⁵ octet.',
   },
   {
     id: 'cu-au',
-    label: 'Cu + Au (Metal Non-Reaction)',
+    label: 'Cu + Au (Metal Non-reaction)',
     atomANumber: 29, // Copper
     atomBNumber: 79, // Gold
     category: 'repulsion',
-    description: 'Both elements are metals with low affinity to accept electrons; no chemical molecule forms.',
+    description: 'Both elements are metal donors; no discrete chemical molecule forms without melting.',
   },
 ];
 
-// Curated database of well-known binary compounds
+export function getBohrShells(atomicNumber: number): number[] {
+  const maxPerShell = [2, 8, 18, 32, 32, 18, 8];
+  let remaining = atomicNumber;
+  const shells: number[] = [];
+  for (const max of maxPerShell) {
+    if (remaining <= 0) break;
+    const take = Math.min(remaining, max);
+    shells.push(take);
+    remaining -= take;
+  }
+  return shells.length > 0 ? shells : [1];
+}
+
 interface KnownCompound {
   formula: string;
   name: string;
@@ -110,6 +135,12 @@ interface KnownCompound {
   explanation: string;
   electronTransferCount?: number;
   bondOrder?: string;
+  reactantACount: number;
+  reactantBCount: number;
+  productCount: number;
+  productUnits: string;
+  stoichiometryRatioText: string;
+  valenceDetails: ValenceTransferInfo;
 }
 
 const KNOWN_REACTIONS: Record<string, KnownCompound> = {
@@ -119,17 +150,39 @@ const KNOWN_REACTIONS: Record<string, KnownCompound> = {
     equation: '2H₂ + O₂ → 2H₂O',
     outcome: 'COVALENT_POLAR',
     energyType: 'exothermic',
-    explanation: 'Oxygen shares valence electrons with two Hydrogen atoms, forming a polar bent molecule with hydrogen bonding potential.',
+    explanation: '2 Hydrogen atoms share their 1s¹ electrons with 1 Oxygen atom (2s²2p⁴). The orbital rings overlap, creating two polar covalent shared pairs to complete Oxygen\'s octet.',
     bondOrder: 'Single Polar Covalent (O-H)',
+    reactantACount: 2,
+    reactantBCount: 1,
+    productCount: 1,
+    productUnits: '1 Molecule of H₂O',
+    stoichiometryRatioText: '2 H atoms + 1 O atom → 1 H₂O molecule (2:1 Ratio)',
+    valenceDetails: {
+      donorShellFrom: '1s¹ valence ring (2 H atoms)',
+      acceptorShellTo: '2p⁴ outer ring → 2p⁶ octet',
+      electronCount: 2,
+      transferType: 'share',
+    },
   },
   '8-1': {
     formula: 'H₂O',
     name: 'Water (Dihydrogen Monoxide)',
-    equation: '2H₂ + O₂ → 2H₂O',
+    equation: 'O₂ + 2H₂ → 2H₂O',
     outcome: 'COVALENT_POLAR',
     energyType: 'exothermic',
-    explanation: 'Oxygen shares valence electrons with Hydrogen atoms, forming a polar covalent structure.',
+    explanation: '1 Oxygen atom binds with 2 Hydrogen atoms through orbital ring overlap, sharing electrons to yield water.',
     bondOrder: 'Single Polar Covalent (O-H)',
+    reactantACount: 1,
+    reactantBCount: 2,
+    productCount: 1,
+    productUnits: '1 Molecule of H₂O',
+    stoichiometryRatioText: '1 O atom + 2 H atoms → 1 H₂O molecule (1:2 Ratio)',
+    valenceDetails: {
+      donorShellFrom: '1s¹ valence ring (2 H atoms)',
+      acceptorShellTo: '2p⁴ outer ring → 2p⁶ octet',
+      electronCount: 2,
+      transferType: 'share',
+    },
   },
   '11-17': {
     formula: 'NaCl',
@@ -137,19 +190,41 @@ const KNOWN_REACTIONS: Record<string, KnownCompound> = {
     equation: '2Na + Cl₂ → 2NaCl',
     outcome: 'IONIC_BOND',
     energyType: 'exothermic',
-    explanation: 'Sodium donates its lone 3s¹ valence electron to Chlorine (3s² 3p⁵), creating Na⁺ and Cl⁻ ions bound by intense electrostatic attraction.',
+    explanation: '2 Sodium atoms donate their outermost 3s¹ electron into the 3p⁵ shell of Chlorine. Sodium\'s 3rd ring vanishes (revealing full 2p⁶ octet), and Chlorine gains its 8th electron, establishing 2 NaCl formula units.',
     electronTransferCount: 1,
     bondOrder: 'Ionic Electrostatic Attraction',
+    reactantACount: 2,
+    reactantBCount: 1,
+    productCount: 2,
+    productUnits: '2 Formula Units of NaCl',
+    stoichiometryRatioText: '2 Na atoms + 1 Cl₂ molecule → 2 NaCl units (2:1:2 Ratio)',
+    valenceDetails: {
+      donorShellFrom: 'Sodium Outer 3s¹ ring (Shell 3)',
+      acceptorShellTo: 'Chlorine Outer 3p⁵ ring → 3p⁶ octet',
+      electronCount: 1,
+      transferType: 'leap',
+    },
   },
   '17-11': {
     formula: 'NaCl',
     name: 'Sodium Chloride (Table Salt)',
-    equation: '2Na + Cl₂ → 2NaCl',
+    equation: 'Cl₂ + 2Na → 2NaCl',
     outcome: 'IONIC_BOND',
     energyType: 'exothermic',
-    explanation: 'Chlorine accepts one electron from Sodium, producing a stable crystalline cubic ionic lattice.',
+    explanation: 'Chlorine strips valence electrons from Sodium, completing its 3p shell into an octet lattice.',
     electronTransferCount: 1,
     bondOrder: 'Ionic Electrostatic Attraction',
+    reactantACount: 1,
+    reactantBCount: 2,
+    productCount: 2,
+    productUnits: '2 Formula Units of NaCl',
+    stoichiometryRatioText: '1 Cl₂ molecule + 2 Na atoms → 2 NaCl units',
+    valenceDetails: {
+      donorShellFrom: 'Sodium Outer 3s¹ ring',
+      acceptorShellTo: 'Chlorine Outer 3p⁵ ring → 3p⁶ octet',
+      electronCount: 1,
+      transferType: 'leap',
+    },
   },
   '12-8': {
     formula: 'MgO',
@@ -157,19 +232,41 @@ const KNOWN_REACTIONS: Record<string, KnownCompound> = {
     equation: '2Mg + O₂ → 2MgO',
     outcome: 'IONIC_BOND',
     energyType: 'exothermic',
-    explanation: 'Magnesium transfers 2 valence electrons to Oxygen, releasing brilliant white light and establishing a high-melting ionic lattice (Mg²⁺ and O²⁻).',
+    explanation: '2 Magnesium atoms each leap 2 valence electrons from their 3s² outer ring into the 2p⁴ outer ring of Oxygen, releasing intense white exothermic light and creating 2 units of refractory MgO.',
     electronTransferCount: 2,
     bondOrder: 'Bivalent Ionic Bond (Mg²⁺ O²⁻)',
+    reactantACount: 2,
+    reactantBCount: 1,
+    productCount: 2,
+    productUnits: '2 Formula Units of MgO',
+    stoichiometryRatioText: '2 Mg atoms + 1 O₂ molecule → 2 MgO units (2:1:2 Ratio)',
+    valenceDetails: {
+      donorShellFrom: 'Magnesium Outer 3s² ring (Shell 3)',
+      acceptorShellTo: 'Oxygen Outer 2p⁴ ring → 2p⁶ octet',
+      electronCount: 2,
+      transferType: 'leap',
+    },
   },
   '8-12': {
     formula: 'MgO',
     name: 'Magnesium Oxide',
-    equation: '2Mg + O₂ → 2MgO',
+    equation: 'O₂ + 2Mg → 2MgO',
     outcome: 'IONIC_BOND',
     energyType: 'exothermic',
-    explanation: 'Oxygen accepts two electrons from Magnesium to complete its octet, forming crystalline MgO.',
+    explanation: 'Oxygen takes 2 electrons per atom from Magnesium to form crystalline MgO units.',
     electronTransferCount: 2,
     bondOrder: 'Bivalent Ionic Bond (Mg²⁺ O²⁻)',
+    reactantACount: 1,
+    reactantBCount: 2,
+    productCount: 2,
+    productUnits: '2 Formula Units of MgO',
+    stoichiometryRatioText: '1 O₂ molecule + 2 Mg atoms → 2 MgO units',
+    valenceDetails: {
+      donorShellFrom: 'Magnesium Outer 3s² ring',
+      acceptorShellTo: 'Oxygen Outer 2p⁴ ring → 2p⁶ octet',
+      electronCount: 2,
+      transferType: 'leap',
+    },
   },
   '6-8': {
     formula: 'CO₂',
@@ -177,17 +274,39 @@ const KNOWN_REACTIONS: Record<string, KnownCompound> = {
     equation: 'C + O₂ → CO₂',
     outcome: 'COVALENT_POLAR',
     energyType: 'exothermic',
-    explanation: 'Carbon forms linear double covalent bonds with two Oxygen atoms (O=C=O), sharing 4 pairs of electrons in a thermodynamically stable gas.',
+    explanation: '1 Carbon atom (4 valence e⁻) overlaps rings with 2 Oxygen atoms (6 valence e⁻ each) to form 4 shared electron pairs (double covalent O=C=O bonds), yielding 1 linear CO₂ molecule.',
     bondOrder: 'Double Covalent (O=C=O)',
+    reactantACount: 1,
+    reactantBCount: 1,
+    productCount: 1,
+    productUnits: '1 Molecule of CO₂',
+    stoichiometryRatioText: '1 C atom + 1 O₂ molecule → 1 CO₂ molecule (1:1 Ratio)',
+    valenceDetails: {
+      donorShellFrom: 'Carbon 2s²2p² outer ring',
+      acceptorShellTo: 'Oxygen 2s²2p⁴ outer ring (4 shared pairs)',
+      electronCount: 4,
+      transferType: 'share',
+    },
   },
   '8-6': {
     formula: 'CO₂',
     name: 'Carbon Dioxide',
-    equation: 'C + O₂ → CO₂',
+    equation: 'O₂ + C → CO₂',
     outcome: 'COVALENT_POLAR',
     energyType: 'exothermic',
-    explanation: 'Carbon and Oxygen share electron pairs in linear geometry, satisfying octet rules for both elements.',
+    explanation: 'Oxygen molecules and Carbon react via ring overlap into stable carbon dioxide gas.',
     bondOrder: 'Double Covalent (O=C=O)',
+    reactantACount: 1,
+    reactantBCount: 1,
+    productCount: 1,
+    productUnits: '1 Molecule of CO₂',
+    stoichiometryRatioText: '1 O₂ molecule + 1 C atom → 1 CO₂ molecule',
+    valenceDetails: {
+      donorShellFrom: 'Carbon 2s²2p² outer ring',
+      acceptorShellTo: 'Oxygen 2s²2p⁴ outer ring (4 shared pairs)',
+      electronCount: 4,
+      transferType: 'share',
+    },
   },
   '3-9': {
     formula: 'LiF',
@@ -195,19 +314,41 @@ const KNOWN_REACTIONS: Record<string, KnownCompound> = {
     equation: '2Li + F₂ → 2LiF',
     outcome: 'IONIC_BOND',
     energyType: 'exothermic',
-    explanation: 'Lithium donates 1 electron to Fluorine. This pairing exhibits the highest electronegativity gradient on the periodic table (ΔEN ≈ 3.0).',
+    explanation: '2 Lithium atoms transfer their lone 2s¹ valence electron to Fluorine (2s²2p⁵). Lithium\'s outer ring collapses leaving a 1s² duplet, and Fluorine achieves 2p⁶ octet, producing 2 LiF units.',
     electronTransferCount: 1,
     bondOrder: 'Strong Ionic Bond',
+    reactantACount: 2,
+    reactantBCount: 1,
+    productCount: 2,
+    productUnits: '2 Formula Units of LiF',
+    stoichiometryRatioText: '2 Li atoms + 1 F₂ molecule → 2 LiF units',
+    valenceDetails: {
+      donorShellFrom: 'Lithium Outer 2s¹ ring',
+      acceptorShellTo: 'Fluorine Outer 2p⁵ ring → 2p⁶ octet',
+      electronCount: 1,
+      transferType: 'leap',
+    },
   },
   '9-3': {
     formula: 'LiF',
     name: 'Lithium Fluoride',
-    equation: '2Li + F₂ → 2LiF',
+    equation: 'F₂ + 2Li → 2LiF',
     outcome: 'IONIC_BOND',
     energyType: 'exothermic',
-    explanation: 'Fluorine strips the 2s electron from Lithium, creating Li⁺ and F⁻ in a rock-salt crystalline structure.',
+    explanation: 'Fluorine strips electrons from Lithium into an ionic salt structure.',
     electronTransferCount: 1,
     bondOrder: 'Strong Ionic Bond',
+    reactantACount: 1,
+    reactantBCount: 2,
+    productCount: 2,
+    productUnits: '2 Formula Units of LiF',
+    stoichiometryRatioText: '1 F₂ molecule + 2 Li atoms → 2 LiF units',
+    valenceDetails: {
+      donorShellFrom: 'Lithium Outer 2s¹ ring',
+      acceptorShellTo: 'Fluorine Outer 2p⁵ ring → 2p⁶ octet',
+      electronCount: 1,
+      transferType: 'leap',
+    },
   },
   '1-17': {
     formula: 'HCl',
@@ -215,91 +356,39 @@ const KNOWN_REACTIONS: Record<string, KnownCompound> = {
     equation: 'H₂ + Cl₂ → 2HCl',
     outcome: 'COVALENT_POLAR',
     energyType: 'exothermic',
-    explanation: 'Hydrogen shares its single electron with Chlorine to form a polar covalent gas that dissociates into hydrochloric acid in aqueous solutions.',
+    explanation: '1 H₂ molecule (2 atoms) and 1 Cl₂ molecule (2 atoms) overlap orbital rings to share two electron pairs, yielding 2 HCl polar gas molecules.',
     bondOrder: 'Polar Single Covalent',
+    reactantACount: 1,
+    reactantBCount: 1,
+    productCount: 2,
+    productUnits: '2 Molecules of HCl',
+    stoichiometryRatioText: '1 H₂ + 1 Cl₂ → 2 HCl molecules (1:1:2 Ratio)',
+    valenceDetails: {
+      donorShellFrom: 'Hydrogen 1s¹ ring',
+      acceptorShellTo: 'Chlorine 3p⁵ ring (Shared pair)',
+      electronCount: 1,
+      transferType: 'share',
+    },
   },
   '17-1': {
     formula: 'HCl',
     name: 'Hydrogen Chloride',
-    equation: 'H₂ + Cl₂ → 2HCl',
+    equation: 'Cl₂ + H₂ → 2HCl',
     outcome: 'COVALENT_POLAR',
     energyType: 'exothermic',
-    explanation: 'Hydrogen and Chlorine share an electron pair with dipole moment oriented toward Chlorine.',
+    explanation: 'Chlorine and Hydrogen share electron pairs to produce 2 molecules of HCl.',
     bondOrder: 'Polar Single Covalent',
-  },
-  '1-9': {
-    formula: 'HF',
-    name: 'Hydrogen Fluoride',
-    equation: 'H₂ + F₂ → 2HF',
-    outcome: 'COVALENT_POLAR',
-    energyType: 'exothermic',
-    explanation: 'Extremely polar covalent molecule with intense dipole-dipole hydrogen bonding capacity.',
-    bondOrder: 'Ultra-Polar Covalent (H-F)',
-  },
-  '9-1': {
-    formula: 'HF',
-    name: 'Hydrogen Fluoride',
-    equation: 'H₂ + F₂ → 2HF',
-    outcome: 'COVALENT_POLAR',
-    energyType: 'exothermic',
-    explanation: 'Strongly polar single covalent bond formed between Hydrogen and the most electronegative element.',
-    bondOrder: 'Ultra-Polar Covalent (H-F)',
-  },
-  '6-1': {
-    formula: 'CH₄',
-    name: 'Methane',
-    equation: 'C + 2H₂ → CH₄',
-    outcome: 'COVALENT_NONPOLAR',
-    energyType: 'exothermic',
-    explanation: 'Carbon forms four symmetrical sp³ covalent bonds with Hydrogen atoms in tetrahedral geometry (ΔEN = 0.35, nonpolar).',
-    bondOrder: 'Single Covalent (sp³ hybrid)',
-  },
-  '1-6': {
-    formula: 'CH₄',
-    name: 'Methane',
-    equation: 'C + 2H₂ → CH₄',
-    outcome: 'COVALENT_NONPOLAR',
-    energyType: 'exothermic',
-    explanation: 'Four hydrogen atoms share electrons with carbon to achieve a stable nonpolar tetrahedral hydrocarbon.',
-    bondOrder: 'Single Covalent (sp³ hybrid)',
-  },
-  '7-1': {
-    formula: 'NH₃',
-    name: 'Ammonia',
-    equation: 'N₂ + 3H₂ → 2NH₃',
-    outcome: 'COVALENT_POLAR',
-    energyType: 'exothermic',
-    explanation: 'Nitrogen shares electrons with three Hydrogen atoms, leaving one lone pair in a trigonal pyramidal geometry.',
-    bondOrder: 'Polar Covalent with Lone Pair',
-  },
-  '1-7': {
-    formula: 'NH₃',
-    name: 'Ammonia',
-    equation: 'N₂ + 3H₂ → 2NH₃',
-    outcome: 'COVALENT_POLAR',
-    energyType: 'exothermic',
-    explanation: 'Nitrogen binds three hydrogens covalently, producing the essential precursor of fertilizers.',
-    bondOrder: 'Polar Covalent with Lone Pair',
-  },
-  '20-8': {
-    formula: 'CaO',
-    name: 'Calcium Oxide (Quicklime)',
-    equation: '2Ca + O₂ → 2CaO',
-    outcome: 'IONIC_BOND',
-    energyType: 'exothermic',
-    explanation: 'Calcium donates two electrons (4s²) to Oxygen, yielding refractory ionic crystals of Ca²⁺ and O²⁻.',
-    electronTransferCount: 2,
-    bondOrder: 'Bivalent Ionic Lattice',
-  },
-  '8-20': {
-    formula: 'CaO',
-    name: 'Calcium Oxide (Quicklime)',
-    equation: '2Ca + O₂ → 2CaO',
-    outcome: 'IONIC_BOND',
-    energyType: 'exothermic',
-    explanation: 'Calcium readily oxidizes, giving up valence electrons to form calcium oxide quicklime.',
-    electronTransferCount: 2,
-    bondOrder: 'Bivalent Ionic Lattice',
+    reactantACount: 1,
+    reactantBCount: 1,
+    productCount: 2,
+    productUnits: '2 Molecules of HCl',
+    stoichiometryRatioText: '1 Cl₂ + 1 H₂ → 2 HCl molecules',
+    valenceDetails: {
+      donorShellFrom: 'Hydrogen 1s¹ ring',
+      acceptorShellTo: 'Chlorine 3p⁵ ring',
+      electronCount: 1,
+      transferType: 'share',
+    },
   },
   '19-35': {
     formula: 'KBr',
@@ -307,19 +396,41 @@ const KNOWN_REACTIONS: Record<string, KnownCompound> = {
     equation: '2K + Br₂ → 2KBr',
     outcome: 'IONIC_BOND',
     energyType: 'exothermic',
-    explanation: 'Potassium donates its 4s¹ electron to Bromine, creating K⁺ and Br⁻ ionic salts with high water solubility.',
+    explanation: '2 Potassium atoms leap their 4s¹ electrons into Bromine 4p⁵ shells, forming 2 units of crystalline KBr salt.',
     electronTransferCount: 1,
     bondOrder: 'Single Ionic Bond',
+    reactantACount: 2,
+    reactantBCount: 1,
+    productCount: 2,
+    productUnits: '2 Formula Units of KBr',
+    stoichiometryRatioText: '2 K atoms + 1 Br₂ molecule → 2 KBr units',
+    valenceDetails: {
+      donorShellFrom: 'Potassium Outer 4s¹ ring',
+      acceptorShellTo: 'Bromine Outer 4p⁵ ring → 4p⁶ octet',
+      electronCount: 1,
+      transferType: 'leap',
+    },
   },
   '35-19': {
     formula: 'KBr',
     name: 'Potassium Bromide',
-    equation: '2K + Br₂ → 2KBr',
+    equation: 'Br₂ + 2K → 2KBr',
     outcome: 'IONIC_BOND',
     energyType: 'exothermic',
-    explanation: 'Bromine oxidizes potassium metal through an electron transfer event, yielding cubic KBr salts.',
+    explanation: 'Bromine oxidizes potassium metal, forming 2 units of KBr.',
     electronTransferCount: 1,
     bondOrder: 'Single Ionic Bond',
+    reactantACount: 1,
+    reactantBCount: 2,
+    productCount: 2,
+    productUnits: '2 Formula Units of KBr',
+    stoichiometryRatioText: '1 Br₂ + 2 K → 2 KBr units',
+    valenceDetails: {
+      donorShellFrom: 'Potassium Outer 4s¹ ring',
+      acceptorShellTo: 'Bromine Outer 4p⁵ ring → 4p⁶ octet',
+      electronCount: 1,
+      transferType: 'leap',
+    },
   },
   '26-8': {
     formula: 'Fe₂O₃',
@@ -327,26 +438,44 @@ const KNOWN_REACTIONS: Record<string, KnownCompound> = {
     equation: '4Fe + 3O₂ → 2Fe₂O₃',
     outcome: 'IONIC_BOND',
     energyType: 'exothermic',
-    explanation: 'Iron donates valence and 3d electrons to Oxygen atoms over oxidation steps, producing reddish-brown rust.',
+    explanation: '4 Iron atoms donate valence electrons into 3 Oxygen molecules (6 O atoms), yielding 2 units of reddish-brown rust (Fe₂O₃).',
     electronTransferCount: 3,
     bondOrder: 'Transition Metal Ionic Lattice',
+    reactantACount: 4,
+    reactantBCount: 3,
+    productCount: 2,
+    productUnits: '2 Formula Units of Fe₂O₃',
+    stoichiometryRatioText: '4 Fe atoms + 3 O₂ molecules → 2 Fe₂O₃ units (4:3:2 Ratio)',
+    valenceDetails: {
+      donorShellFrom: 'Iron Outer 4s²3d⁶ ring',
+      acceptorShellTo: 'Oxygen Outer 2p⁴ ring → 2p⁶ octet',
+      electronCount: 3,
+      transferType: 'leap',
+    },
   },
   '8-26': {
     formula: 'Fe₂O₃',
     name: 'Iron(III) Oxide (Rust)',
-    equation: '4Fe + 3O₂ → 2Fe₂O₃',
+    equation: '3O₂ + 4Fe → 2Fe₂O₃',
     outcome: 'IONIC_BOND',
     energyType: 'exothermic',
-    explanation: 'Oxygen oxidizes Iron into an insoluble red-brown ionic oxide matrix.',
+    explanation: 'Oxygen oxidizes Iron into rust units.',
     electronTransferCount: 3,
     bondOrder: 'Transition Metal Ionic Lattice',
+    reactantACount: 3,
+    reactantBCount: 4,
+    productCount: 2,
+    productUnits: '2 Formula Units of Fe₂O₃',
+    stoichiometryRatioText: '3 O₂ molecules + 4 Fe atoms → 2 Fe₂O₃ units',
+    valenceDetails: {
+      donorShellFrom: 'Iron Outer 4s²3d⁶ ring',
+      acceptorShellTo: 'Oxygen Outer 2p⁴ ring → 2p⁶ octet',
+      electronCount: 3,
+      transferType: 'leap',
+    },
   },
 };
 
-/**
- * Universal Chemical Reaction Simulator Engine
- * Determines the interaction between any pair of elements from the 118 elements.
- */
 export function calculateReaction(elemA: ElementData, elemB: ElementData): ReactionResult {
   const key = `${elemA.atomicNumber}-${elemB.atomicNumber}`;
   
@@ -376,6 +505,12 @@ export function calculateReaction(elemA: ElementData, elemB: ElementData): React
       donorSymbol: enA < enB ? elemA.symbol : elemB.symbol,
       acceptorSymbol: enA < enB ? elemB.symbol : elemA.symbol,
       bondOrder: known.bondOrder,
+      reactantACount: known.reactantACount,
+      reactantBCount: known.reactantBCount,
+      productCount: known.productCount,
+      productUnits: known.productUnits,
+      stoichiometryRatioText: known.stoichiometryRatioText,
+      valenceDetails: known.valenceDetails,
     };
   }
 
@@ -397,6 +532,17 @@ export function calculateReaction(elemA: ElementData, elemB: ElementData): React
       energyType: 'inert',
       deltaEN: 0,
       explanation: `${noble.name} belongs to Group 18 with a complete, chemically stable valence electron octet (${noble.atomicNumber === 2 ? '1s² duplet' : 's²p⁶ octet'}). It possesses near-zero electron affinity and extraordinarily high ionization energy, causing incoming ${other.name} atoms to bounce off elastically due to electron cloud shielding and Pauli exclusion.`,
+      reactantACount: 1,
+      reactantBCount: 1,
+      productCount: 0,
+      productUnits: '0 Products (Atoms separate)',
+      stoichiometryRatioText: `1 ${elemA.symbol} + 1 ${elemB.symbol} ↛ 0 Products (Repulsion)`,
+      valenceDetails: {
+        donorShellFrom: 'None (Inert)',
+        acceptorShellTo: `${noble.symbol} octet is already saturated (8 e⁻)`,
+        electronCount: 0,
+        transferType: 'repel',
+      },
     };
   }
 
@@ -412,8 +558,19 @@ export function calculateReaction(elemA: ElementData, elemB: ElementData): React
         balancedEquation: `2${elemA.symbol} → ${elemA.symbol}₂`,
         energyType: 'exothermic',
         deltaEN: 0.0,
-        explanation: `Two identical ${elemA.name} atoms share their valence electrons with zero electronegativity difference (ΔEN = 0.00), forming a perfectly symmetrical nonpolar covalent diatomic molecule.`,
+        explanation: `Two identical ${elemA.name} atoms share their valence orbital rings with zero electronegativity difference (ΔEN = 0.00), forming a perfectly symmetrical diatomic covalent molecule.`,
         bondOrder: elemA.symbol === 'N' ? 'Triple Covalent (N≡N)' : elemA.symbol === 'O' ? 'Double Covalent (O=O)' : 'Single Covalent',
+        reactantACount: 2,
+        reactantBCount: 0,
+        productCount: 1,
+        productUnits: `1 Molecule of ${elemA.symbol}₂`,
+        stoichiometryRatioText: `2 ${elemA.symbol} atoms → 1 ${elemA.symbol}₂ molecule`,
+        valenceDetails: {
+          donorShellFrom: `${elemA.symbol} valence ring`,
+          acceptorShellTo: `Shared orbital loop between both ${elemA.symbol} atoms`,
+          electronCount: 2,
+          transferType: 'share',
+        },
       };
     } else {
       return {
@@ -426,6 +583,17 @@ export function calculateReaction(elemA: ElementData, elemB: ElementData): React
         energyType: 'inert',
         deltaEN: 0.0,
         explanation: `Identical atoms of ${elemA.name} condense into a bulk elemental solid lattice rather than a discrete binary molecule under standard conditions.`,
+        reactantACount: 1,
+        reactantBCount: 1,
+        productCount: 0,
+        productUnits: 'Bulk lattice solid',
+        stoichiometryRatioText: `1 ${elemA.symbol} + 1 ${elemB.symbol} → Bulk solid phase`,
+        valenceDetails: {
+          donorShellFrom: 'Delocalized electron sea',
+          acceptorShellTo: 'Lattice coordination',
+          electronCount: 0,
+          transferType: 'repel',
+        },
       };
     }
   }
@@ -458,6 +626,17 @@ export function calculateReaction(elemA: ElementData, elemB: ElementData): React
       energyType: 'inert',
       deltaEN,
       explanation: `Both ${elemA.name} and ${elemB.name} are electropositive metals with low electron affinities. They do not exchange or localize electrons into discrete chemical molecules; under standard conditions they bounce off one another unless melted together into an intermetallic alloy.`,
+      reactantACount: 1,
+      reactantBCount: 1,
+      productCount: 0,
+      productUnits: '0 Molecules (Solid blend only)',
+      stoichiometryRatioText: `1 ${elemA.symbol} + 1 ${elemB.symbol} ↛ Alloy blend (Requires high heat)`,
+      valenceDetails: {
+        donorShellFrom: 'Both metals are donors',
+        acceptorShellTo: 'No acceptor orbital available',
+        electronCount: 0,
+        transferType: 'repel',
+      },
     };
   }
 
@@ -472,14 +651,25 @@ export function calculateReaction(elemA: ElementData, elemB: ElementData): React
       bondTypeTitle: 'Ionic Chemical Bond (Electron Transfer)',
       compoundFormula: `${metal.symbol}${nonMetal.symbol}`,
       compoundName: `${metal.name} ${nonMetal.name}ide`,
-      balancedEquation: `${metal.symbol} + ${nonMetal.symbol} → ${metal.symbol}${nonMetal.symbol}`,
+      balancedEquation: `2${metal.symbol} + ${nonMetal.symbol}₂ → 2${metal.symbol}${nonMetal.symbol}`,
       energyType: 'exothermic',
       deltaEN,
-      explanation: `Strong electronegativity difference (ΔEN = ${deltaEN.toFixed(2)}) drives the transfer of valence electrons from electropositive ${metal.name} (donor) to electronegative ${nonMetal.name} (acceptor), creating opposite ions bound by coulombic forces.`,
+      explanation: `Strong electronegativity difference (ΔEN = ${deltaEN.toFixed(2)}) drives the transfer of valence electrons from electropositive ${metal.name} (donor) into the outer ring of electronegative ${nonMetal.name} (acceptor), creating opposite ions bound by coulombic forces.`,
       electronTransferCount: 1,
       donorSymbol: metal.symbol,
       acceptorSymbol: nonMetal.symbol,
       bondOrder: 'Ionic Coulombs Attraction',
+      reactantACount: 2,
+      reactantBCount: 1,
+      productCount: 2,
+      productUnits: `2 Formula Units of ${metal.symbol}${nonMetal.symbol}`,
+      stoichiometryRatioText: `2 ${metal.symbol} atoms + 1 ${nonMetal.symbol}₂ molecule → 2 ${metal.symbol}${nonMetal.symbol} units`,
+      valenceDetails: {
+        donorShellFrom: `${metal.symbol} outermost valence ring`,
+        acceptorShellTo: `${nonMetal.symbol} outermost octet ring`,
+        electronCount: 1,
+        transferType: 'leap',
+      },
     };
   }
 
@@ -496,9 +686,20 @@ export function calculateReaction(elemA: ElementData, elemB: ElementData): React
       energyType: 'exothermic',
       deltaEN,
       explanation: isPolar
-        ? `Both elements are nonmetals with a moderate electronegativity difference (ΔEN = ${deltaEN.toFixed(2)}). They share valence electron pairs with an asymmetric dipole density centered toward ${enA > enB ? elemA.name : elemB.name}.`
-        : `Both elements are nonmetals with similar electronegativities (ΔEN = ${deltaEN.toFixed(2)} < 0.40). They share electron clouds with near-equal distribution, forming a nonpolar covalent bond.`,
+        ? `Both elements are nonmetals with a moderate electronegativity difference (ΔEN = ${deltaEN.toFixed(2)}). Their outer rings overlap, sharing electron pairs with an asymmetric dipole density centered toward ${enA > enB ? elemA.name : elemB.name}.`
+        : `Both elements are nonmetals with similar electronegativities (ΔEN = ${deltaEN.toFixed(2)} < 0.40). Their outer rings overlap to share electron clouds with near-equal distribution, forming a nonpolar covalent bond.`,
       bondOrder: isPolar ? 'Polar Shared Electron Cloud' : 'Nonpolar Symmetrical Cloud',
+      reactantACount: 1,
+      reactantBCount: 1,
+      productCount: 1,
+      productUnits: `1 Molecule of ${elemA.symbol}${elemB.symbol}`,
+      stoichiometryRatioText: `1 ${elemA.symbol} atom + 1 ${elemB.symbol} atom → 1 ${elemA.symbol}${elemB.symbol} molecule (1:1 Ratio)`,
+      valenceDetails: {
+        donorShellFrom: `${elemA.symbol} valence ring`,
+        acceptorShellTo: `Shared orbital overlap with ${elemB.symbol}`,
+        electronCount: 2,
+        transferType: 'share',
+      },
     };
   }
 
@@ -513,5 +714,16 @@ export function calculateReaction(elemA: ElementData, elemB: ElementData): React
     energyType: 'inert',
     deltaEN,
     explanation: `Under standard ambient temperature and pressure (298 K, 1 atm), the activation energy barrier and orbital valence geometry between ${elemA.name} and ${elemB.name} prevent spontaneous bond formation. The atoms repel each other.`,
+    reactantACount: 1,
+    reactantBCount: 1,
+    productCount: 0,
+    productUnits: '0 Products (Repulsion)',
+    stoichiometryRatioText: `1 ${elemA.symbol} + 1 ${elemB.symbol} ↛ No bond formed`,
+    valenceDetails: {
+      donorShellFrom: 'Valence orbitals misaligned',
+      acceptorShellTo: 'No stable overlap geometry',
+      electronCount: 0,
+      transferType: 'repel',
+    },
   };
 }
