@@ -340,7 +340,9 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
           </button>
         </div>
 
-        {/* Quick Presets Bar */}
+        {/* Scrollable Modal Body Container */}
+        <div className="reaction-modal-scroll-body">
+          {/* Quick Presets Bar */}
         <div className="reaction-presets-strip">
           <span className="presets-label">⚡ Fast Presets:</span>
           <div className="presets-scroll-pills">
@@ -802,6 +804,7 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
               <p className="explanation-paragraph">{reaction.explanation}</p>
             </div>
           </div>
+        </div>
         </div>
 
         {/* Footer */}
