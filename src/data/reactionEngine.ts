@@ -1,4 +1,4 @@
-import type { ElementData } from '../types/element';
+import type { ElementData, ElementCategory } from '../types/element';
 
 export type ReactionOutcomeType =
   | 'IONIC_BOND'
@@ -725,5 +725,306 @@ export function calculateReaction(elemA: ElementData, elemB: ElementData): React
       electronCount: 0,
       transferType: 'repel',
     },
+  };
+}
+
+export interface AtomVisualNode {
+  id: string;
+  symbol: string;
+  name: string;
+  atomicNumber: number;
+  category: ElementCategory;
+  role: 'reactantA' | 'reactantB';
+  startX: number; // percentage (0-100)
+  startY: number; // percentage (0-100)
+  bondedX: number; // percentage (0-100)
+  bondedY: number; // percentage (0-100)
+  radius: number; // px radius
+  chargeSign?: '+' | '−';
+}
+
+export interface BondConnectionLine {
+  id: string;
+  fromAtomId: string;
+  toAtomId: string;
+  isDouble?: boolean;
+}
+
+export interface ReactionAssemblyPlan {
+  atoms: AtomVisualNode[];
+  bonds: BondConnectionLine[];
+}
+
+export function generateAtomAssemblyLayout(
+  elemA: ElementData,
+  elemB: ElementData,
+  reaction: ReactionResult
+): ReactionAssemblyPlan {
+  const isIonic = reaction.outcome === 'IONIC_BOND';
+  const isCovalent = reaction.outcome === 'COVALENT_POLAR' || reaction.outcome === 'COVALENT_NONPOLAR';
+  const isRepulsion = !reaction.isReactive;
+
+  // Water H2O (2 H + 1 O)
+  if (
+    (elemA.symbol === 'H' && elemB.symbol === 'O') ||
+    (elemA.symbol === 'O' && elemB.symbol === 'H')
+  ) {
+    const isA_Hydrogen = elemA.symbol === 'H';
+    const hElem = isA_Hydrogen ? elemA : elemB;
+    const oElem = isA_Hydrogen ? elemB : elemA;
+
+    return {
+      atoms: [
+        {
+          id: 'h1',
+          symbol: 'H',
+          name: 'Hydrogen',
+          atomicNumber: 1,
+          category: hElem.category,
+          role: isA_Hydrogen ? 'reactantA' : 'reactantB',
+          startX: isA_Hydrogen ? 18 : 82,
+          startY: 30,
+          bondedX: 40,
+          bondedY: 34,
+          radius: 20,
+        },
+        {
+          id: 'h2',
+          symbol: 'H',
+          name: 'Hydrogen',
+          atomicNumber: 1,
+          category: hElem.category,
+          role: isA_Hydrogen ? 'reactantA' : 'reactantB',
+          startX: isA_Hydrogen ? 18 : 82,
+          startY: 70,
+          bondedX: 40,
+          bondedY: 66,
+          radius: 20,
+        },
+        {
+          id: 'o1',
+          symbol: 'O',
+          name: 'Oxygen',
+          atomicNumber: 8,
+          category: oElem.category,
+          role: isA_Hydrogen ? 'reactantB' : 'reactantA',
+          startX: isA_Hydrogen ? 82 : 18,
+          startY: 50,
+          bondedX: 56,
+          bondedY: 50,
+          radius: 34,
+        },
+      ],
+      bonds: [
+        { id: 'b1', fromAtomId: 'o1', toAtomId: 'h1' },
+        { id: 'b2', fromAtomId: 'o1', toAtomId: 'h2' },
+      ],
+    };
+  }
+
+  // Carbon Dioxide CO2 (1 C + 2 O)
+  if (
+    (elemA.symbol === 'C' && elemB.symbol === 'O') ||
+    (elemA.symbol === 'O' && elemB.symbol === 'C')
+  ) {
+    const isA_Carbon = elemA.symbol === 'C';
+    const cElem = isA_Carbon ? elemA : elemB;
+    const oElem = isA_Carbon ? elemB : elemA;
+
+    return {
+      atoms: [
+        {
+          id: 'c1',
+          symbol: 'C',
+          name: 'Carbon',
+          atomicNumber: 6,
+          category: cElem.category,
+          role: isA_Carbon ? 'reactantA' : 'reactantB',
+          startX: isA_Carbon ? 18 : 82,
+          startY: 50,
+          bondedX: 50,
+          bondedY: 50,
+          radius: 32,
+        },
+        {
+          id: 'o1',
+          symbol: 'O',
+          name: 'Oxygen',
+          atomicNumber: 8,
+          category: oElem.category,
+          role: isA_Carbon ? 'reactantB' : 'reactantA',
+          startX: isA_Carbon ? 82 : 18,
+          startY: 32,
+          bondedX: 32,
+          bondedY: 50,
+          radius: 28,
+        },
+        {
+          id: 'o2',
+          symbol: 'O',
+          name: 'Oxygen',
+          atomicNumber: 8,
+          category: oElem.category,
+          role: isA_Carbon ? 'reactantB' : 'reactantA',
+          startX: isA_Carbon ? 82 : 18,
+          startY: 68,
+          bondedX: 68,
+          bondedY: 50,
+          radius: 28,
+        },
+      ],
+      bonds: [
+        { id: 'b1', fromAtomId: 'c1', toAtomId: 'o1', isDouble: true },
+        { id: 'b2', fromAtomId: 'c1', toAtomId: 'o2', isDouble: true },
+      ],
+    };
+  }
+
+  // Table Salt NaCl (2 Na + 2 Cl or 1:1 pair)
+  if (
+    (elemA.symbol === 'Na' && elemB.symbol === 'Cl') ||
+    (elemA.symbol === 'Cl' && elemB.symbol === 'Na')
+  ) {
+    const isA_Na = elemA.symbol === 'Na';
+    const naElem = isA_Na ? elemA : elemB;
+    const clElem = isA_Na ? elemB : elemA;
+
+    return {
+      atoms: [
+        {
+          id: 'na1',
+          symbol: 'Na',
+          name: 'Sodium',
+          atomicNumber: 11,
+          category: naElem.category,
+          role: isA_Na ? 'reactantA' : 'reactantB',
+          startX: isA_Na ? 18 : 82,
+          startY: 34,
+          bondedX: 38,
+          bondedY: 38,
+          radius: 28,
+          chargeSign: '+',
+        },
+        {
+          id: 'cl1',
+          symbol: 'Cl',
+          name: 'Chlorine',
+          atomicNumber: 17,
+          category: clElem.category,
+          role: isA_Na ? 'reactantB' : 'reactantA',
+          startX: isA_Na ? 82 : 18,
+          startY: 34,
+          bondedX: 52,
+          bondedY: 38,
+          radius: 32,
+          chargeSign: '−',
+        },
+        {
+          id: 'na2',
+          symbol: 'Na',
+          name: 'Sodium',
+          atomicNumber: 11,
+          category: naElem.category,
+          role: isA_Na ? 'reactantA' : 'reactantB',
+          startX: isA_Na ? 18 : 82,
+          startY: 66,
+          bondedX: 48,
+          bondedY: 66,
+          radius: 28,
+          chargeSign: '+',
+        },
+        {
+          id: 'cl2',
+          symbol: 'Cl',
+          name: 'Chlorine',
+          atomicNumber: 17,
+          category: clElem.category,
+          role: isA_Na ? 'reactantB' : 'reactantA',
+          startX: isA_Na ? 82 : 18,
+          startY: 66,
+          bondedX: 62,
+          bondedY: 66,
+          radius: 32,
+          chargeSign: '−',
+        },
+      ],
+      bonds: [
+        { id: 'b1', fromAtomId: 'na1', toAtomId: 'cl1' },
+        { id: 'b2', fromAtomId: 'na2', toAtomId: 'cl2' },
+      ],
+    };
+  }
+
+  // Repulsion cases
+  if (isRepulsion) {
+    return {
+      atoms: [
+        {
+          id: 'atom-a',
+          symbol: elemA.symbol,
+          name: elemA.name,
+          atomicNumber: elemA.atomicNumber,
+          category: elemA.category,
+          role: 'reactantA',
+          startX: 20,
+          startY: 50,
+          bondedX: 10, // Bounced back!
+          bondedY: 50,
+          radius: 32,
+        },
+        {
+          id: 'atom-b',
+          symbol: elemB.symbol,
+          name: elemB.name,
+          atomicNumber: elemB.atomicNumber,
+          category: elemB.category,
+          role: 'reactantB',
+          startX: 80,
+          startY: 50,
+          bondedX: 90, // Bounced back!
+          bondedY: 50,
+          radius: 32,
+        },
+      ],
+      bonds: [],
+    };
+  }
+
+  // General 1:1 reaction
+  const donorIsA = reaction.donorSymbol === elemA.symbol;
+  return {
+    atoms: [
+      {
+        id: 'atom-a',
+        symbol: elemA.symbol,
+        name: elemA.name,
+        atomicNumber: elemA.atomicNumber,
+        category: elemA.category,
+        role: 'reactantA',
+        startX: 22,
+        startY: 50,
+        bondedX: 43,
+        bondedY: 50,
+        radius: 30,
+        chargeSign: isIonic ? (donorIsA ? '+' : '−') : undefined,
+      },
+      {
+        id: 'atom-b',
+        symbol: elemB.symbol,
+        name: elemB.name,
+        atomicNumber: elemB.atomicNumber,
+        category: elemB.category,
+        role: 'reactantB',
+        startX: 78,
+        startY: 50,
+        bondedX: 57,
+        bondedY: 50,
+        radius: 32,
+        chargeSign: isIonic ? (donorIsA ? '−' : '+') : undefined,
+      },
+    ],
+    bonds: [
+      { id: 'b1', fromAtomId: 'atom-a', toAtomId: 'atom-b', isDouble: isCovalent && reaction.bondOrder?.includes('Double') },
+    ],
   };
 }

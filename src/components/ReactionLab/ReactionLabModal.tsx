@@ -4,9 +4,11 @@ import { CATEGORIES } from '../../data/categories';
 import { CustomElementSelect } from '../Compare/CustomElementSelect';
 import {
   calculateReaction,
+  generateAtomAssemblyLayout,
   getBohrShells,
   REACTION_PRESETS,
   type ReactionOutcomeType,
+  type AtomVisualNode,
 } from '../../data/reactionEngine';
 import './ReactionLabModal.css';
 
@@ -78,9 +80,11 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
 
   const reaction = useMemo(() => calculateReaction(elemA, elemB), [elemA, elemB]);
 
-  // Bohr shells calculation for dynamic ring animations
-  const shellsA = useMemo(() => getBohrShells(elemA.atomicNumber), [elemA.atomicNumber]);
-  const shellsB = useMemo(() => getBohrShells(elemB.atomicNumber), [elemB.atomicNumber]);
+  // Generate constituent atoms arrangement and assembly plan
+  const assemblyPlan = useMemo(
+    () => generateAtomAssemblyLayout(elemA, elemB, reaction),
+    [elemA, elemB, reaction]
+  );
 
   // Reset animation when elements change
   const handleSelectA = useCallback((id: number) => {
@@ -114,14 +118,14 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
     timerRef.current = window.setTimeout(() => {
       setAnimStage('interacting');
 
-      // Stage 2: Interaction climax & Ring electron transfer (950ms)
+      // Stage 2: Interaction climax & Ring electron transfer (1000ms)
       timerRef.current = window.setTimeout(() => {
         if (reaction.isReactive) {
           setAnimStage('bonded');
         } else {
           setAnimStage('rejected');
         }
-      }, 950);
+      }, 1000);
     }, 800);
   }, [reaction.isReactive]);
 
@@ -131,11 +135,6 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
   }, []);
 
   if (!isOpen) return null;
-
-  const catA = CATEGORIES[elemA.category] || CATEGORIES['unknown'];
-  const catB = CATEGORIES[elemB.category] || CATEGORIES['unknown'];
-  const colorsA = theme === 'dark' ? catA.colorDark : catA.colorLight;
-  const colorsB = theme === 'dark' ? catB.colorDark : catB.colorLight;
 
   const getOutcomeBadgeClass = (outcome: ReactionOutcomeType) => {
     switch (outcome) {
@@ -149,78 +148,25 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
     }
   };
 
-  // Helper to render Bohr Orbital Rings for an atom in SVG
-  const renderBohrRings = (
-    shells: number[],
-    isAtomA: boolean,
-    atomColor: string
-  ) => {
-    const isDonor = isAtomA && reaction.donorSymbol === elemA.symbol;
-    const isAcceptor = !isAtomA && reaction.acceptorSymbol === elemB.symbol;
-    const isIonic = reaction.outcome === 'IONIC_BOND';
-
-    return (
-      <svg className="bohr-atom-svg" viewBox="0 0 160 160" aria-hidden="true">
-        {shells.map((count, idx) => {
-          const isOuter = idx === shells.length - 1;
-          const radius = 28 + idx * 14;
-
-          // If donor in ionic bond, the outermost ring dissolves/vanishes on 'bonded'
-          const shouldDissolveOuterRing = isDonor && isOuter && isIonic && animStage === 'bonded';
-
-          // If acceptor in ionic bond, outer ring glows and completes octet
-          const shouldOctetGlow = isAcceptor && isOuter && isIonic && animStage === 'bonded';
-
-          // Render electron dots around the ring
-          const effectiveCount = isOuter && shouldOctetGlow ? Math.min(count + 1, 8) : count;
-          const dots = Array.from({ length: Math.min(effectiveCount, 12) }).map((_, dIdx) => {
-            const angle = (dIdx / Math.min(effectiveCount, 12)) * 2 * Math.PI;
-            const cx = 80 + radius * Math.cos(angle);
-            const cy = 80 + radius * Math.sin(angle);
-
-            // Highlight the leap valence electron on donor's outer ring
-            const isLeapDot = isDonor && isOuter && dIdx === 0;
-
-            return (
-              <circle
-                key={dIdx}
-                cx={cx}
-                cy={cy}
-                r={isLeapDot ? '3.5' : '2.5'}
-                className={`bohr-dot ${isLeapDot ? 'leap-source-dot' : ''} ${animStage === 'interacting' && isLeapDot ? 'detaching' : ''}`}
-                fill={isLeapDot ? '#fbbf24' : atomColor}
-              />
-            );
-          });
-
-          return (
-            <g
-              key={idx}
-              className={`bohr-ring-group ${shouldDissolveOuterRing ? 'dissolved-ring' : ''} ${shouldOctetGlow ? 'octet-glow-ring' : ''}`}
-            >
-              <circle
-                cx="80"
-                cy="80"
-                r={radius}
-                className="bohr-ring-track"
-                stroke={shouldOctetGlow ? '#34d399' : atomColor}
-                strokeWidth={isOuter ? '1.8' : '1.2'}
-                strokeDasharray={isOuter ? '4 2' : 'none'}
-                opacity={shouldDissolveOuterRing ? '0' : isOuter ? '0.85' : '0.5'}
-              />
-              <g
-                className="bohr-dots-orbit"
-                style={{
-                  animation: `spinOrbit ${12 + idx * 4}s linear infinite ${idx % 2 === 0 ? 'normal' : 'reverse'}`,
-                }}
-              >
-                {dots}
-              </g>
-            </g>
-          );
-        })}
-      </svg>
-    );
+  // Helper to get current coordinates of an atom node
+  const getAtomCoords = (atom: AtomVisualNode) => {
+    switch (animStage) {
+      case 'idle':
+        return { x: atom.startX, y: atom.startY };
+      case 'approaching':
+        return {
+          x: atom.startX + (atom.bondedX - atom.startX) * 0.45,
+          y: atom.startY + (atom.bondedY - atom.startY) * 0.45,
+        };
+      case 'interacting':
+        return {
+          x: atom.startX + (atom.bondedX - atom.startX) * 0.82,
+          y: atom.startY + (atom.bondedY - atom.startY) * 0.82,
+        };
+      case 'bonded':
+      case 'rejected':
+        return { x: atom.bondedX, y: atom.bondedY };
+    }
   };
 
   return (
@@ -246,7 +192,7 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
                 Chemical Reaction & Bonding Lab
               </h2>
               <p className="reaction-modal-subtitle">
-                Simulate atomic collisions, valence electron transfers, covalent clouds, and inert repulsions
+                Visualizing how individual atoms move, transfer electrons, and assemble into molecular bonds
               </p>
             </div>
           </div>
@@ -370,33 +316,140 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
           </div>
         </div>
 
-        {/* Animated Reaction Arena Stage */}
+        {/* Dynamic Multi-Atom Molecular Assembly Arena */}
         <div className={`reaction-arena ${animStage}`}>
           <div className="arena-grid-overlay" aria-hidden="true" />
 
-          {/* Left Atom A with Bohr Orbital Rings */}
-          <div
-            className={`arena-atom atom-left ${animStage}`}
-            style={{
-              '--atom-color': colorsA.border,
-              '--atom-bg': colorsA.bg,
-            } as React.CSSProperties}
-          >
-            {renderBohrRings(shellsA, true, colorsA.border)}
+          {/* Connected Chemical Bond Lines (Visible when bonded) */}
+          {animStage === 'bonded' && assemblyPlan.bonds.length > 0 && (
+            <svg className="arena-bonds-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="bondGlowGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#38bdf8" />
+                  <stop offset="50%" stopColor="#34d399" />
+                  <stop offset="100%" stopColor="#a855f7" />
+                </linearGradient>
+              </defs>
+              {assemblyPlan.bonds.map((bond) => {
+                const fromNode = assemblyPlan.atoms.find((a) => a.id === bond.fromAtomId);
+                const toNode = assemblyPlan.atoms.find((a) => a.id === bond.toAtomId);
+                if (!fromNode || !toNode) return null;
 
-            <div className="atom-nucleus">
-              <span className="atom-num-label">#{elemA.atomicNumber}</span>
-              <span className="atom-symbol-label">{elemA.symbol}</span>
-              <span className="atom-name-label">{elemA.name}</span>
-            </div>
-            {animStage === 'bonded' && reaction.outcome === 'IONIC_BOND' && (
-              <span className="ionic-charge-badge positive">
-                {reaction.donorSymbol === elemA.symbol ? '+' : '−'}
-              </span>
-            )}
-          </div>
+                if (bond.isDouble) {
+                  return (
+                    <g key={bond.id} className="double-bond-line-group">
+                      <line
+                        x1={`${fromNode.bondedX}%`}
+                        y1={`${fromNode.bondedY - 2.5}%`}
+                        x2={`${toNode.bondedX}%`}
+                        y2={`${toNode.bondedY - 2.5}%`}
+                        stroke="url(#bondGlowGrad)"
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                        className="bond-line"
+                      />
+                      <line
+                        x1={`${fromNode.bondedX}%`}
+                        y1={`${fromNode.bondedY + 2.5}%`}
+                        x2={`${toNode.bondedX}%`}
+                        y2={`${toNode.bondedY + 2.5}%`}
+                        stroke="url(#bondGlowGrad)"
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                        className="bond-line"
+                      />
+                    </g>
+                  );
+                }
 
-          {/* Center Interaction Zone */}
+                return (
+                  <line
+                    key={bond.id}
+                    x1={`${fromNode.bondedX}%`}
+                    y1={`${fromNode.bondedY}%`}
+                    x2={`${toNode.bondedX}%`}
+                    y2={`${toNode.bondedY}%`}
+                    stroke="url(#bondGlowGrad)"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    className="bond-line"
+                  />
+                );
+              })}
+            </svg>
+          )}
+
+          {/* Constituent Moving Atoms */}
+          {assemblyPlan.atoms.map((atom) => {
+            const coords = getAtomCoords(atom);
+            const catInfo = CATEGORIES[atom.category] || CATEGORIES['unknown'];
+            const atomColors = theme === 'dark' ? catInfo.colorDark : catInfo.colorLight;
+            const shells = getBohrShells(atom.atomicNumber);
+
+            return (
+              <div
+                key={atom.id}
+                className={`assembly-atom-node ${atom.role} ${animStage} ${animStage === 'rejected' ? 'atom-rejected-bounce' : ''}`}
+                style={{
+                  left: `${coords.x}%`,
+                  top: `${coords.y}%`,
+                  '--atom-theme-border': atomColors.border,
+                  '--atom-theme-bg': atomColors.bg,
+                } as React.CSSProperties}
+              >
+                {/* Bohr Orbital Rings */}
+                <div className="atom-orbital-rings-wrap" aria-hidden="true">
+                  {shells.map((_count, idx) => {
+                    const isOuter = idx === shells.length - 1;
+                    const ringSize = atom.radius * 2 + idx * 16;
+                    return (
+                      <div
+                        key={idx}
+                        className={`orbital-orbit-ring ${isOuter ? 'outer-valence-orbit' : ''}`}
+                        style={{
+                          width: `${ringSize}px`,
+                          height: `${ringSize}px`,
+                          borderColor: atomColors.border,
+                        }}
+                      >
+                        {/* Dot on valence ring */}
+                        {isOuter && (
+                          <span
+                            className="orbiting-valence-dot"
+                            style={{ backgroundColor: atomColors.border }}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Nucleus Core */}
+                <div
+                  className="atom-nucleus-core"
+                  style={{
+                    width: `${atom.radius * 1.5}px`,
+                    height: `${atom.radius * 1.5}px`,
+                    backgroundColor: atomColors.bg,
+                    borderColor: atomColors.border,
+                  }}
+                >
+                  <span className="node-atom-num">#{atom.atomicNumber}</span>
+                  <span className="node-atom-sym">{atom.symbol}</span>
+                  <span className="node-atom-name">{atom.name}</span>
+                </div>
+
+                {/* Charge badge on bonded ionic atom */}
+                {animStage === 'bonded' && atom.chargeSign && (
+                  <span className={`node-charge-pill ${atom.chargeSign === '+' ? 'pos' : 'neg'}`}>
+                    {atom.chargeSign}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Center Interaction Zone (Electron Leap, Repulsion, or Molecular Form) */}
           <div className="arena-center-zone">
             {/* Parabolic Ring-to-Ring Electron Leap Arc */}
             {animStage === 'interacting' && reaction.outcome === 'IONIC_BOND' && (
@@ -418,16 +471,7 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
               </div>
             )}
 
-            {/* Covalent Shared Electron Cloud Overlay */}
-            {animStage === 'bonded' && (reaction.outcome === 'COVALENT_POLAR' || reaction.outcome === 'COVALENT_NONPOLAR') && (
-              <div className="covalent-merged-cloud">
-                <div className="shared-electron e1">e⁻</div>
-                <div className="shared-electron e2">e⁻</div>
-                <span className="covalent-bond-label">Shared Valence Orbital Pair</span>
-              </div>
-            )}
-
-            {/* Repulsion Forcefield Shield & Ripple */}
+            {/* Repulsion Forcefield Barrier */}
             {(animStage === 'interacting' || animStage === 'rejected') && !reaction.isReactive && (
               <div className="repulsion-forcefield-container">
                 <div className="forcefield-wave wave-1" />
@@ -444,7 +488,7 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
               <div className="exothermic-flash-ring" />
             )}
 
-            {/* Center Status Stamp */}
+            {/* Assembled Compound Badge */}
             {animStage === 'bonded' && (
               <div className="arena-result-stamp stamp-bonded">
                 <span className="stamp-icon">✨</span>
@@ -456,54 +500,32 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
             {animStage === 'rejected' && (
               <div className="arena-result-stamp stamp-rejected">
                 <span className="stamp-icon">🛑</span>
-                <span className="stamp-formula">NO BOND FORMED</span>
-                <span className="stamp-sub">Inert Electron Cloud Repulsion</span>
+                <span className="stamp-formula">NO MOLECULE FORMED</span>
+                <span className="stamp-sub">Atoms Bounced Off Elastically</span>
               </div>
-            )}
-          </div>
-
-          {/* Right Atom B with Bohr Orbital Rings */}
-          <div
-            className={`arena-atom atom-right ${animStage}`}
-            style={{
-              '--atom-color': colorsB.border,
-              '--atom-bg': colorsB.bg,
-            } as React.CSSProperties}
-          >
-            {renderBohrRings(shellsB, false, colorsB.border)}
-
-            <div className="atom-nucleus">
-              <span className="atom-num-label">#{elemB.atomicNumber}</span>
-              <span className="atom-symbol-label">{elemB.symbol}</span>
-              <span className="atom-name-label">{elemB.name}</span>
-            </div>
-            {animStage === 'bonded' && reaction.outcome === 'IONIC_BOND' && (
-              <span className="ionic-charge-badge negative">
-                {reaction.donorSymbol === elemB.symbol ? '+' : '−'}
-              </span>
             )}
           </div>
         </div>
 
-        {/* Ring Transfer & Valence Ledger Strip */}
+        {/* Valence Transfer Mechanism Ledger Strip */}
         <div className="valence-transfer-strip">
           <div className="valence-ledger-item">
-            <span className="ledger-tag">Electron Ring Mechanism:</span>
+            <span className="ledger-tag">Atomic Movement & Ring Mechanism:</span>
             <span className="ledger-text">
               {reaction.valenceDetails.transferType === 'leap' && (
                 <>
-                  ⚡ <strong>{reaction.valenceDetails.donorShellFrom}</strong> leaps into{' '}
-                  <strong>{reaction.valenceDetails.acceptorShellTo}</strong> ({reaction.valenceDetails.electronCount} e⁻)
+                  ⚡ <strong>Atoms move together:</strong> {reaction.valenceDetails.donorShellFrom} leaps into{' '}
+                  <strong>{reaction.valenceDetails.acceptorShellTo}</strong>, creating ionic lattice units!
                 </>
               )}
               {reaction.valenceDetails.transferType === 'share' && (
                 <>
-                  🤝 <strong>Orbital Overlap:</strong> Rings merge sharing {reaction.valenceDetails.electronCount} valence electrons
+                  🤝 <strong>Atoms assemble & dock:</strong> Rings overlap sharing {reaction.valenceDetails.electronCount} valence electron pairs into a single molecule!
                 </>
               )}
               {reaction.valenceDetails.transferType === 'repel' && (
                 <>
-                  🛑 <strong>Pauli Exclusion:</strong> {reaction.valenceDetails.acceptorShellTo}
+                  🛑 <strong>Collision Repelled:</strong> Atoms approach but bounce off elastically ({reaction.valenceDetails.acceptorShellTo})!
                 </>
               )}
             </span>
@@ -550,9 +572,9 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
         {/* Footer */}
         <div className="reaction-modal-footer">
           <div className="footer-legend">
-            <span className="legend-chip ionic">● Ionic (ΔEN ≥ 1.8)</span>
-            <span className="legend-chip covalent">● Covalent (Shared pairs)</span>
-            <span className="legend-chip noble">● Inert / Octet Shield</span>
+            <span className="legend-chip ionic">● Ionic (Electron Transfer)</span>
+            <span className="legend-chip covalent">● Covalent (Shared Pairs)</span>
+            <span className="legend-chip noble">● Inert (Complete Octet)</span>
           </div>
           <button type="button" className="reaction-done-btn" onClick={onClose}>
             Done Exploring
