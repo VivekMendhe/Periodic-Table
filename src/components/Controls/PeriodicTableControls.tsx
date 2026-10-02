@@ -9,6 +9,7 @@ interface PeriodicTableControlsProps {
   isTempOpen: boolean;
   onToggleTemp: () => void;
   onOpenCompare: () => void;
+  onOpenReactionLab: () => void;
 }
 
 export const PeriodicTableControls: React.FC<PeriodicTableControlsProps> = ({
@@ -17,6 +18,7 @@ export const PeriodicTableControls: React.FC<PeriodicTableControlsProps> = ({
   isTempOpen,
   onToggleTemp,
   onOpenCompare,
+  onOpenReactionLab,
 }) => {
   return (
     <div className="pt-controls-container">
@@ -28,6 +30,16 @@ export const PeriodicTableControls: React.FC<PeriodicTableControlsProps> = ({
       </div>
 
       <div className="pt-controls-right">
+        <button
+          type="button"
+          className="control-action-btn reaction-lab-btn"
+          onClick={onOpenReactionLab}
+          title="Simulate Chemical Reactions & Bonding between elements"
+        >
+          <span className="btn-icon">⚗️</span>
+          <span>Reaction Lab</span>
+        </button>
+
         <button
           type="button"
           className={`control-action-btn ${isTempOpen ? 'is-active' : ''}`}

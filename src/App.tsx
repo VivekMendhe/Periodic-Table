@@ -12,6 +12,7 @@ import { ElementModal } from './components/ElementDetails/ElementModal';
 import { PeriodicTableControls } from './components/Controls/PeriodicTableControls';
 import { TemperatureControl } from './components/Controls/TemperatureControl';
 import { ElementCompareModal } from './components/Compare/ElementCompareModal';
+import { ReactionLabModal } from './components/ReactionLab/ReactionLabModal';
 import './App.css';
 
 // Run development validation once
@@ -70,6 +71,11 @@ export function App() {
   const [compareElemA, setCompareElemA] = useState<ElementData | null>(null);
   const [compareElemB, setCompareElemB] = useState<ElementData | null>(null);
 
+  // Reaction Lab modal states
+  const [isReactionLabOpen, setIsReactionLabOpen] = useState<boolean>(false);
+  const [reactionLabElemA, setReactionLabElemA] = useState<ElementData | null>(null);
+  const [reactionLabElemB, setReactionLabElemB] = useState<ElementData | null>(null);
+
   // Stable event handlers for performance
   const handleSelectElement = useCallback((element: ElementData) => {
     setSelectedElement(element);
@@ -117,6 +123,23 @@ export function App() {
     setIsCompareOpen(false);
   }, []);
 
+  const handleOpenReactionLabGlobal = useCallback(() => {
+    setReactionLabElemA(null);
+    setReactionLabElemB(null);
+    setIsReactionLabOpen(true);
+  }, []);
+
+  const handleOpenReactionLabFromCompare = useCallback((elemA: ElementData, elemB: ElementData) => {
+    setIsCompareOpen(false);
+    setReactionLabElemA(elemA);
+    setReactionLabElemB(elemB);
+    setIsReactionLabOpen(true);
+  }, []);
+
+  const handleCloseReactionLab = useCallback(() => {
+    setIsReactionLabOpen(false);
+  }, []);
+
   return (
     <div className="app-layout">
       <div className="app-container">
@@ -147,13 +170,14 @@ export function App() {
             onSelectCategory={handleSelectCategory}
           />
 
-          {/* Interactive Controls: Color Mode, Temperature Toggle, Compare Elements */}
+          {/* Interactive Controls: Color Mode, Temperature Toggle, Compare Elements, Reaction Lab */}
           <PeriodicTableControls
             colorMode={colorMode}
             onSelectColorMode={handleSelectColorMode}
             isTempOpen={isTempOpen}
             onToggleTemp={handleToggleTemp}
             onOpenCompare={handleOpenCompareGlobal}
+            onOpenReactionLab={handleOpenReactionLabGlobal}
           />
 
           {/* Collapsible Temperature Simulator */}
@@ -225,6 +249,17 @@ export function App() {
         elements={ELEMENTS}
         initialElementA={compareElemA}
         initialElementB={compareElemB}
+        theme={theme}
+        onOpenReactionLab={handleOpenReactionLabFromCompare}
+      />
+
+      {/* Chemical Reaction & Bonding Lab Modal */}
+      <ReactionLabModal
+        isOpen={isReactionLabOpen}
+        onClose={handleCloseReactionLab}
+        elements={ELEMENTS}
+        initialElementA={reactionLabElemA}
+        initialElementB={reactionLabElemB}
         theme={theme}
       />
     </div>

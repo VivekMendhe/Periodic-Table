@@ -11,6 +11,7 @@ interface ElementCompareModalProps {
   initialElementA?: ElementData | null;
   initialElementB?: ElementData | null;
   theme?: 'light' | 'dark';
+  onOpenReactionLab?: (elemA: ElementData, elemB: ElementData) => void;
 }
 
 export const ElementCompareModal: React.FC<ElementCompareModalProps> = ({
@@ -20,6 +21,7 @@ export const ElementCompareModal: React.FC<ElementCompareModalProps> = ({
   initialElementA,
   initialElementB,
   theme = 'light',
+  onOpenReactionLab,
 }) => {
   const [userSelectedA, setUserSelectedA] = useState<number | null>(null);
   const [userSelectedB, setUserSelectedB] = useState<number | null>(null);
@@ -256,6 +258,16 @@ export const ElementCompareModal: React.FC<ElementCompareModalProps> = ({
 
         {/* Footer */}
         <div className="compare-modal-footer">
+          {onOpenReactionLab && (
+            <button
+              type="button"
+              className="compare-test-reaction-btn"
+              onClick={() => onOpenReactionLab(elementA, elementB)}
+              title={`Simulate chemical reaction between ${elementA.name} and ${elementB.name}`}
+            >
+              <span>⚗️ Test Reaction in Lab</span>
+            </button>
+          )}
           <button type="button" className="compare-done-btn" onClick={onClose}>
             Done
           </button>
