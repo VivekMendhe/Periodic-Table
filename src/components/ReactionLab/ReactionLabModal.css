@@ -682,9 +682,21 @@
   transform: translate(-50%, -50%) scale(1.05);
 }
 
-/* Reactant atoms fuse into center and dissolve into the single product element */
+/* Reactant atoms fuse into center and dissolve into the single product element one by one */
 .assembly-atom-node.fusing-into-product {
-  animation: atomFuseIntoCenter 0.75s cubic-bezier(0.35, 0, 0.25, 1) forwards;
+  animation: atomFuseIntoCenter 0.75s cubic-bezier(0.35, 0, 0.25, 1) both;
+}
+
+.assembly-atom-node.fusing-into-product:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.assembly-atom-node.fusing-into-product:nth-child(2) {
+  animation-delay: 200ms;
+}
+
+.assembly-atom-node.fusing-into-product:nth-child(3) {
+  animation-delay: 380ms;
 }
 
 @keyframes atomFuseIntoCenter {

@@ -103,17 +103,19 @@
 .traveling-electron-particle.phase2_detach {
   left: var(--start-x, 32%);
   top: var(--start-y, 50%);
-  animation: detachMotion 1.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation: detachMotion 1.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .traveling-electron-particle.phase3_transfer {
-  animation: flightCurvedArc 1.5s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  left: calc(var(--start-x, 32%) + 6%);
+  top: calc(var(--start-y, 50%) - 7%);
+  animation: flightCurvedArc 1.4s cubic-bezier(0.25, 0.1, 0.25, 1) both;
 }
 
 .traveling-electron-particle.phase4_accept {
   left: var(--end-x, 68%);
   top: var(--end-y, 50%);
-  animation: enterAcceptorShell 1.2s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+  animation: enterAcceptorShell 1.2s cubic-bezier(0.18, 0.89, 0.32, 1.28) both;
 }
 
 @keyframes detachMotion {

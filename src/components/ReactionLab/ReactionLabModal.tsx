@@ -4,7 +4,7 @@ import { CATEGORIES } from '../../data/categories';
 import { ELEMENT_SHELLS } from '../../data/elementExtensions';
 import { CustomElementSelect } from '../Compare/CustomElementSelect';
 import { BohrAtomModel } from './BohrAtomModel';
-import { ElectronTransferArc } from './ElectronTransferArc';
+import { ElectronTransferArc, type ElectronStreamItem } from './ElectronTransferArc';
 import { FusedCompoundElement } from './FusedCompoundElement';
 import { FallingExcessAtom } from './FallingExcessAtom';
 import {
@@ -116,6 +116,68 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
   // Excess / unreacted atoms that will fall down to the floor in Phase 5
   const excessACount = Math.max(0, reaction.reactantACount - 1);
   const excessBCount = Math.max(0, reaction.reactantBCount - 1);
+
+  // Generate individual electron transfer trajectory streams (one per valence electron)
+  const transferStreams = useMemo<ElectronStreamItem[]>(() => {
+    if (!reaction.isReactive) return [];
+
+    // Multi-atom setups like H2O (2 H + 1 O), CO2 (1 C + 2 O)
+    if (assemblyPlan.atoms.length > 2) {
+      const donorAtoms = assemblyPlan.atoms.filter((a) => a.symbol === donorSymbol);
+      const targetAtoms = assemblyPlan.atoms.filter((a) => a.symbol === acceptorSymbol);
+      const target = targetAtoms[0] || assemblyPlan.atoms[assemblyPlan.atoms.length - 1];
+
+      if (donorAtoms.length > 0 && target) {
+        return donorAtoms.map((donor, idx) => ({
+          id: `stream-multi-${donor.id}-${idx}`,
+          startX: donor.startX,
+          startY: donor.startY,
+          endX: target.startX,
+          endY: target.startY,
+          donorSymbol: donor.symbol,
+          acceptorSymbol: target.symbol,
+          delayMs: idx * 380, // One by one!
+          label: `${donor.symbol}${idx + 1} e⁻ → ${target.symbol} shell`,
+        }));
+      }
+    }
+
+    // 2-atom pairs (e.g. Na + Cl, Mg + O, Li + F)
+    const count = Math.max(
+      1,
+      reaction.electronTransferCount ||
+      reaction.valenceDetails?.electronCount ||
+      (elemA.symbol === 'Mg' || elemB.symbol === 'Mg' ? 2 : 1)
+    );
+
+    const streams: ElectronStreamItem[] = [];
+    for (let i = 0; i < count; i++) {
+      const yOffset = count > 1 ? (i === 0 ? -4 : 4) : 0;
+      streams.push({
+        id: `stream-pair-${i}`,
+        startX: donorNode.startX,
+        startY: donorNode.startY + yOffset,
+        endX: acceptorNode.startX,
+        endY: acceptorNode.startY + yOffset,
+        donorSymbol: donorNode.symbol,
+        acceptorSymbol: acceptorNode.symbol,
+        delayMs: i * 400, // One by one!
+        label: `${donorNode.symbol} e⁻ (${i + 1}/${count}) → ${acceptorNode.symbol}`,
+      });
+    }
+    return streams;
+  }, [
+    reaction.isReactive,
+    reaction.electronTransferCount,
+    reaction.valenceDetails?.electronCount,
+    assemblyPlan.atoms,
+    donorSymbol,
+    acceptorSymbol,
+    donorNode,
+    acceptorNode,
+    elemA.symbol,
+    elemB.symbol,
+  ]);
 
   // Reset animation when elements change
   const handleSelectA = useCallback((id: number) => {
@@ -617,16 +679,11 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
             </svg>
           )}
 
-          {/* Continuous Electron Transfer Trajectory Arc & Coulomb Field Lines */}
-          {isIonic && (
+          {/* Continuous Electron Transfer Trajectory Arcs (Supports 1 or multiple electrons one-by-one) */}
+          {reaction.isReactive && (
             <ElectronTransferArc
               phase={animPhase}
-              startX={donorNode.startX}
-              startY={donorNode.startY}
-              endX={acceptorNode.startX}
-              endY={acceptorNode.startY}
-              donorSymbol={donorNode.symbol}
-              acceptorSymbol={acceptorNode.symbol}
+              streams={transferStreams}
             />
           )}
 
@@ -645,8 +702,8 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
             const atomColors = theme === 'dark' ? catInfo.colorDark : catInfo.colorLight;
             const originalShells = ELEMENT_SHELLS[atom.atomicNumber] || getBohrShells(atom.atomicNumber);
 
-            const isNodeDonor = isIonic && atom.symbol === donorSymbol;
-            const isNodeAcceptor = isIonic && atom.symbol === acceptorSymbol;
+            const isNodeDonor = reaction.isReactive && atom.symbol === donorSymbol;
+            const isNodeAcceptor = reaction.isReactive && atom.symbol === acceptorSymbol;
 
             // Phase 1: Outermost shell highlight
             const isHighlighted = animPhase === 'phase1_prep';
@@ -678,7 +735,8 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
             const effectiveShells = [...originalShells];
             if (isNodeAcceptor && (animPhase === 'phase4_accept' || animPhase === 'phase5_bond')) {
               const lastIdx = effectiveShells.length - 1;
-              effectiveShells[lastIdx] = Math.min(8, effectiveShells[lastIdx] + 1);
+              const transferCount = reaction.electronTransferCount || reaction.valenceDetails?.electronCount || 1;
+              effectiveShells[lastIdx] = Math.min(8, effectiveShells[lastIdx] + transferCount);
             }
 
             // Charge badge timing
