@@ -27,22 +27,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius-md);
-  background: var(--logo-bg);
-  color: var(--accent-primary);
   flex-shrink: 0;
-  transition: transform 0.3s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .app-brand:hover .app-logo-wrapper {
-  transform: rotate(18deg) scale(1.05);
+  transform: translateY(-2px) scale(1.05);
+  filter: drop-shadow(0 6px 14px rgba(59, 130, 246, 0.35));
 }
 
 .app-logo-svg {
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
 }
 
 .app-title-group {
