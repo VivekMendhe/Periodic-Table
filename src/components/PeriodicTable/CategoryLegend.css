@@ -1,0 +1,109 @@
+.category-legend-section {
+  background: var(--surface-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-top: 20px;
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.legend-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.legend-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.reset-filters-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.reset-filters-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-focus);
+  color: var(--accent-primary);
+}
+
+.legend-pills-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.legend-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 9999px;
+  padding: 5px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.16s ease;
+  user-select: none;
+}
+
+.legend-pill:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  border-color: var(--pill-swatch-border);
+  transform: translateY(-1px);
+}
+
+.legend-pill.is-active {
+  background: var(--pill-swatch-bg);
+  border-color: var(--pill-swatch-accent);
+  color: var(--text-primary);
+  box-shadow: 0 0 0 1px var(--pill-swatch-accent);
+}
+
+.legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--pill-swatch-bg);
+  border: 1.5px solid var(--pill-swatch-accent);
+  flex-shrink: 0;
+}
+
+.legend-name {
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .category-legend-section {
+    padding: 12px 14px;
+  }
+
+  .legend-pills-grid {
+    gap: 6px;
+  }
+
+  .legend-pill {
+    padding: 4px 10px;
+    font-size: 0.75rem;
+  }
+}

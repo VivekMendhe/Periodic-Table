@@ -1,0 +1,107 @@
+.app-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--app-bg);
+  transition: background-color 0.25s ease;
+}
+
+.app-container {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.app-main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-bottom-grid {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr;
+  gap: 20px;
+  align-items: stretch;
+  margin-top: 4px;
+}
+
+.bottom-left-col,
+.bottom-right-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.bottom-left-col > section {
+  flex: 1;
+  margin-top: 0;
+}
+
+.bottom-right-col > div {
+  flex: 1;
+}
+
+/* Footer */
+.app-footer {
+  margin-top: 40px;
+  padding: 24px 0 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+}
+
+.footer-credit {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.footer-credit strong {
+  color: var(--text-primary);
+}
+
+.footer-subtext {
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1024px) {
+  .app-container {
+    padding: 14px 16px;
+  }
+
+  .app-bottom-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-container {
+    padding: 10px 12px;
+  }
+
+  .app-footer {
+    margin-top: 24px;
+    padding: 16px 0 12px;
+  }
+
+  .footer-credit {
+    font-size: 0.78rem;
+  }
+
+  .footer-subtext {
+    font-size: 0.72rem;
+  }
+}
