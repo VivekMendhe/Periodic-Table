@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { ElementData } from '../../types/element';
-import { CATEGORIES, CATEGORY_LIST } from '../../data/categories';
+import { CATEGORIES } from '../../data/categories';
+import { CustomElementSelect } from './CustomElementSelect';
 import './ElementCompareModal.css';
 
 interface ElementCompareModalProps {
@@ -62,23 +63,6 @@ export const ElementCompareModal: React.FC<ElementCompareModalProps> = ({
   const enA = parseFloat(elementA.electronegativity);
   const enB = parseFloat(elementB.electronegativity);
 
-  const renderDropdownOptions = () => (
-    <>
-      {CATEGORY_LIST.map((cat) => {
-        const catElements = elements.filter((el) => el.category === cat.id);
-        if (catElements.length === 0) return null;
-        return (
-          <optgroup key={cat.id} label={`── ${cat.name} ──`}>
-            {catElements.map((el) => (
-              <option key={el.atomicNumber} value={el.atomicNumber}>
-                #{el.atomicNumber} {el.symbol} – {el.name}
-              </option>
-            ))}
-          </optgroup>
-        );
-      })}
-    </>
-  );
 
   return (
     <div
@@ -114,39 +98,31 @@ export const ElementCompareModal: React.FC<ElementCompareModalProps> = ({
         {/* Element Selection Row */}
         <div className="compare-selectors-row">
           <div className="selector-col">
-            <label htmlFor="elem-a-select" className="selector-label">
+            <span className="selector-label">
               Element 1:
-            </label>
-            <div className="select-picker-wrapper">
-              <select
-                id="elem-a-select"
-                className="element-select-dropdown"
-                value={elementAId}
-                onChange={(e) => setUserSelectedA(parseInt(e.target.value, 10))}
-              >
-                {renderDropdownOptions()}
-              </select>
-              <span className="picker-chevron" aria-hidden="true">▼</span>
-            </div>
+            </span>
+            <CustomElementSelect
+              id="elem-a-select"
+              selectedElementId={elementAId}
+              onSelect={setUserSelectedA}
+              elements={elements}
+              theme={theme}
+            />
           </div>
 
           <div className="vs-badge">VS</div>
 
           <div className="selector-col">
-            <label htmlFor="elem-b-select" className="selector-label">
+            <span className="selector-label">
               Element 2:
-            </label>
-            <div className="select-picker-wrapper">
-              <select
-                id="elem-b-select"
-                className="element-select-dropdown"
-                value={elementBId}
-                onChange={(e) => setUserSelectedB(parseInt(e.target.value, 10))}
-              >
-                {renderDropdownOptions()}
-              </select>
-              <span className="picker-chevron" aria-hidden="true">▼</span>
-            </div>
+            </span>
+            <CustomElementSelect
+              id="elem-b-select"
+              selectedElementId={elementBId}
+              onSelect={setUserSelectedB}
+              elements={elements}
+              theme={theme}
+            />
           </div>
         </div>
 
