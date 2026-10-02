@@ -457,7 +457,7 @@
    ========================================================== */
 .reaction-arena {
   position: relative;
-  height: 340px;
+  height: 390px;
   background: radial-gradient(circle at center, #0f172a 0%, #030712 100%);
   border-bottom: 1px solid var(--border-color);
   overflow: hidden;
@@ -470,6 +470,95 @@
                     linear-gradient(90deg, rgba(56, 189, 248, 0.05) 1px, transparent 1px);
   background-size: 24px 24px;
   pointer-events: none;
+}
+
+/* Reactant Element Reservoirs (Source Depots where atoms break off from) */
+.reactant-source-depot {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 4;
+  pointer-events: none;
+  transition: all 0.4s ease;
+}
+
+.reactant-source-depot.depot-left {
+  left: 3.5%;
+}
+
+.reactant-source-depot.depot-right {
+  right: 3.5%;
+}
+
+.depot-core {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  border: 1.8px dashed rgba(56, 189, 248, 0.45);
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.reactant-source-depot.phase1_prep .depot-core {
+  border-color: #38bdf8;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+}
+
+.depot-count {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #38bdf8;
+  line-height: 1;
+}
+
+.depot-sym {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1.1;
+}
+
+.depot-name {
+  font-size: 0.52rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.depot-role-tag {
+  font-size: 0.56rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid var(--border-color);
+  padding: 1px 6px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.depot-fission-wave {
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  border: 2px solid #f59e0b;
+  animation: fissionWave 0.8s ease-out infinite;
+}
+
+@keyframes fissionWave {
+  0% { transform: scale(0.6); opacity: 1; }
+  100% { transform: scale(1.6); opacity: 0; }
 }
 
 /* Connected Chemical Bond Lines */
@@ -493,6 +582,53 @@
   100% { stroke-dasharray: 100 0; opacity: 1; }
 }
 
+/* Synthesized Ionic Bond Bridge in Phase 5 */
+.synthesized-bond-bridge {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 6;
+  pointer-events: none;
+  animation: bridgeAppear 0.5s ease-out forwards;
+}
+
+.bridge-glow-beam {
+  width: 140px;
+  height: 4px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #3b82f6, #34d399, #10b981);
+  box-shadow: 0 0 16px rgba(52, 211, 153, 0.8), 0 0 28px rgba(56, 189, 248, 0.6);
+  animation: beamPulse 1s ease-in-out infinite alternate;
+}
+
+.bridge-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #a7f3d0;
+  background: rgba(6, 78, 59, 0.7);
+  border: 1px solid #10b981;
+  padding: 2px 8px;
+  border-radius: 12px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+@keyframes beamPulse {
+  0% { opacity: 0.7; transform: scaleY(0.9); }
+  100% { opacity: 1; transform: scaleY(1.4); }
+}
+
+@keyframes bridgeAppear {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
 /* Individual Constituent Atom Nodes */
 .assembly-atom-node {
   position: absolute;
@@ -507,105 +643,7 @@
 }
 
 .assembly-atom-node.phase1_prep {
-  transform: translate(-50%, -50%) scale(1.06);
-}
-
-.atom-orbital-rings-wrap {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.orbital-orbit-ring {
-  position: absolute;
-  border-radius: 50%;
-  border: 1.2px dashed var(--atom-theme-border, #38bdf8);
-  opacity: 0.55;
-  animation: spinOrbit 16s linear infinite;
-}
-
-.outer-valence-orbit {
-  border-style: solid;
-  border-width: 1.5px;
-  opacity: 0.75;
-}
-
-.orbiting-valence-dot {
-  position: absolute;
-  top: -3px;
-  left: 50%;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  transform: translateX(-50%);
-  box-shadow: 0 0 8px currentColor;
-}
-
-.atom-nucleus-core {
-  border-radius: 50%;
-  border: 2px solid var(--atom-theme-border, #38bdf8);
-  box-shadow: 0 0 16px var(--atom-theme-border, rgba(56, 189, 248, 0.5));
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  z-index: 2;
-  position: relative;
-  transition: transform 0.3s ease;
-}
-
-.node-atom-num {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.55rem;
-  font-weight: 700;
-  opacity: 0.85;
-}
-
-.node-atom-sym {
-  font-size: 1rem;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.node-atom-name {
-  font-size: 0.46rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  opacity: 0.9;
-  margin-top: 1px;
-}
-
-.node-charge-pill {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  font-size: 0.8rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  z-index: 5;
-  box-shadow: 0 0 10px currentColor;
-  animation: popBadge 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-}
-
-.node-charge-pill.pos {
-  background: #3b82f6;
-  border: 1.5px solid #93c5fd;
-}
-
-.node-charge-pill.neg {
-  background: #10b981;
-  border: 1.5px solid #6ee7b7;
+  transform: translate(-50%, -50%) scale(1.05);
 }
 
 /* Recoil bounce animation on rejection */
@@ -618,16 +656,6 @@
   35% { transform: translate(-50%, -50%) scale(0.9); }
   70% { transform: translate(-50%, -50%) scale(1.05); }
   100% { transform: translate(-50%, -50%) scale(1); }
-}
-
-@keyframes popBadge {
-  0% { transform: scale(0); }
-  100% { transform: scale(1); }
-}
-
-@keyframes spinOrbit {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 
 /* Center Interaction Zone */
@@ -777,44 +805,60 @@
   100% { transform: scale(2); opacity: 0; }
 }
 
-/* Result Stamp */
+/* Result Stamp - Positioned at top center of arena with generous clearance */
 .arena-result-stamp {
   position: absolute;
-  top: 12px;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 12px;
+  padding: 5px 16px;
   border-radius: 20px;
+  z-index: 45;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
   animation: stampSlideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
 }
 
 .stamp-bonded {
-  background: rgba(16, 185, 129, 0.2);
+  background: rgba(16, 185, 129, 0.22);
   border: 1.5px solid #10b981;
   color: #34d399;
 }
 
 .stamp-rejected {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.22);
   border: 1.5px solid #ef4444;
   color: #f87171;
 }
 
-.stamp-formula {
-  font-size: 0.84rem;
+.stamp-title {
+  font-size: 0.66rem;
   font-weight: 800;
-  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #a7f3d0;
+}
+
+.stamp-formula {
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: #ffffff;
 }
 
 .stamp-sub {
-  font-size: 0.7rem;
-  opacity: 0.85;
+  font-size: 0.72rem;
+  opacity: 0.9;
+  font-weight: 600;
 }
 
 @keyframes stampSlideDown {
-  from { transform: translateY(-16px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from { transform: translate(-50%, -18px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
 }
 
 /* Valence Transfer & Ledger Strip */

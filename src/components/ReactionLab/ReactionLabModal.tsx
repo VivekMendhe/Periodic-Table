@@ -231,34 +231,34 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
   const getNarrativeMessage = () => {
     switch (animPhase) {
       case 'idle':
-        return 'Select two elements above and click "⚡ Initiate Reaction" to observe atomic shells, electron detachment, and chemical bond formation.';
+        return 'Select reactants and click "⚡ Initiate Reaction" to watch atoms break off from reactant element rings and synthesize into a new compound molecule!';
       case 'phase1_prep':
         if (isIonic) {
-          return `Phase 1 (Preparation): ${donorNode.name} highlights outermost shell with 1 valence electron. ${acceptorNode.name} highlights outermost shell with 7 valence electrons, needing 1 electron to complete its octet.`;
+          return `Phase 1 (Preparation): Reactant sources prepare. ${donorNode.name} outer shell highlights 1 valence e⁻; ${acceptorNode.name} outer shell highlights 7 valence e⁻.`;
         }
         if (isCovalent) {
-          return `Phase 1 (Preparation): Both nonmetal atoms align their outermost valence shells in preparation to share electron pairs.`;
+          return `Phase 1 (Preparation): Both nonmetal reactant sources align their valence electron shells.`;
         }
         return `Phase 1 (Preparation): Evaluating atomic electron shells... Stable closed shells detected.`;
       case 'phase2_detach':
         if (isIonic) {
-          return `Phase 2 (Ionization): Outermost valence electron detaches from ${donorNode.name}'s shell. ${donorNode.symbol} becomes positively charged ${donorNode.symbol}⁺ ion with its 3rd shell now empty!`;
+          return `Phase 2 (Atom Break-Off): Atoms break off ('tut ke nikalte hain') from reactant element rings! Valence electron detaches as ${donorNode.symbol} ionizes to ${donorNode.symbol}⁺.`;
         }
         if (isCovalent) {
-          return `Phase 2 (Valence Shift): Valence electrons migrate toward the inter-nuclear bonding axis.`;
+          return `Phase 2 (Atom Break-Off): Atoms break off from reactant element sources and enter the reaction chamber.`;
         }
-        return `Phase 2 (Approach): Inert electron shells approach each other.`;
+        return `Phase 2 (Approach): Atoms break off and approach each other.`;
       case 'phase3_transfer':
         if (isIonic) {
-          return `Phase 3 (Transfer Trajectory): The electron glides continuously along a curved electric trajectory toward ${acceptorNode.name}, leaving a radiant glowing trail.`;
+          return `Phase 3 (Convergence & Electron Leap): Detached atoms converge in the center. The electron travels along a radiant curved trajectory toward ${acceptorNode.name}.`;
         }
         if (isCovalent) {
-          return `Phase 3 (Orbital Overlap): Atomic electron clouds overlap, forming shared molecular orbital regions.`;
+          return `Phase 3 (Convergence & Cloud Overlap): Detached atoms meet in the center, overlapping their valence electron clouds.`;
         }
         return `Phase 3 (Coulomb Repulsion): Mutual electron cloud repulsion creates a strong electrostatic forcefield.`;
       case 'phase4_accept':
         if (isIonic) {
-          return `Phase 4 (Octet Completion): ${acceptorNode.name} captures the incoming electron into its outermost shell, completing a stable octet (8 electrons) as negatively charged ${acceptorNode.symbol}⁻ ion!`;
+          return `Phase 4 (Octet Completion): ${acceptorNode.name} captures the incoming electron, completing a stable octet (8 electrons) as ${acceptorNode.symbol}⁻ ion!`;
         }
         if (isCovalent) {
           return `Phase 4 (Synchronized Sharing): Shared electron pairs orbit across both nuclei simultaneously.`;
@@ -266,10 +266,10 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
         return `Phase 4 (Forcefield Shockwave): Electrostatic repulsion wave deflects collision energy!`;
       case 'phase5_bond':
         if (isIonic) {
-          return `Phase 5 (Electrostatic Attraction): Oppositely charged ions (${donorNode.symbol}⁺ and ${acceptorNode.symbol}⁻) attract via Coulomb forces (F = k·q₁q₂/r²) to form ${reaction.compoundFormula} (${reaction.compoundName})!`;
+          return `Phase 5 (Compound Synthesis): Oppositely charged ions lock together through electrostatic Coulomb forces, synthesizing the NEW compound ${reaction.compoundFormula} (${reaction.compoundName})!`;
         }
         if (isCovalent) {
-          return `Phase 5 (Covalent Bond Locked): Stable ${reaction.compoundFormula} (${reaction.compoundName}) molecule formed with shared electron pairs.`;
+          return `Phase 5 (Molecular Synthesis): Atoms lock together into the brand NEW molecule ${reaction.compoundFormula} (${reaction.compoundName})!`;
         }
         return `Phase 5 (Elastic Recoil): Atoms bounce off each other without chemical bond formation.`;
       case 'rejected':
@@ -426,7 +426,7 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
           <div className="stepper-connector" />
           <div className={`stepper-step ${getStepState(2)}`}>
             <span className="step-num">2</span>
-            <span className="step-text">Detach</span>
+            <span className="step-text">Break Off</span>
           </div>
           <div className="stepper-connector" />
           <div className={`stepper-step ${getStepState(3)}`}>
@@ -441,7 +441,7 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
           <div className="stepper-connector" />
           <div className={`stepper-step ${getStepState(5)}`}>
             <span className="step-num">5</span>
-            <span className="step-text">{reaction.isReactive ? 'Bond Formed' : 'Repelled'}</span>
+            <span className="step-text">{reaction.isReactive ? 'Synthesize' : 'Repelled'}</span>
           </div>
         </div>
 
@@ -450,10 +450,10 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
           <span className="narrative-badge">
             {animPhase === 'idle' && '🔬 Standby'}
             {animPhase === 'phase1_prep' && '🔍 1. Preparation'}
-            {animPhase === 'phase2_detach' && '⚡ 2. Ionization'}
+            {animPhase === 'phase2_detach' && '⚡ 2. Atom Break-Off'}
             {animPhase === 'phase3_transfer' && '🚀 3. Trajectory'}
             {animPhase === 'phase4_accept' && '✨ 4. Octet Complete'}
-            {animPhase === 'phase5_bond' && (reaction.isReactive ? '💎 5. Bond Locked' : '🛑 Repulsion')}
+            {animPhase === 'phase5_bond' && (reaction.isReactive ? '💎 5. Synthesized' : '🛑 Repulsion')}
             {animPhase === 'rejected' && '🛑 Repulsion'}
           </span>
           <span className="narrative-message">{getNarrativeMessage()}</span>
@@ -492,6 +492,48 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
         {/* Dynamic Multi-Atom Molecular Assembly Arena */}
         <div className={`reaction-arena ${animPhase}`}>
           <div className="arena-grid-overlay" aria-hidden="true" />
+
+          {/* Celebratory Synthesized Compound Badge (Positioned at Top of Arena) */}
+          {animPhase === 'phase5_bond' && reaction.isReactive && (
+            <div className="arena-result-stamp stamp-bonded">
+              <span className="stamp-icon">✨</span>
+              <span className="stamp-title">NEW COMPOUND SYNTHESIZED:</span>
+              <strong className="stamp-formula">{reaction.compoundFormula}</strong>
+              <span className="stamp-sub">({reaction.bondTypeTitle})</span>
+            </div>
+          )}
+
+          {animPhase === 'rejected' && (
+            <div className="arena-result-stamp stamp-rejected">
+              <span className="stamp-icon">🛑</span>
+              <span className="stamp-formula">REPELLED: NO MOLECULE FORMED</span>
+              <span className="stamp-sub">Atoms Bounced Off Elastically</span>
+            </div>
+          )}
+
+          {/* Reactant Element A Reservoir (Left Source) */}
+          <div className={`reactant-source-depot depot-left ${animPhase}`} title={`${elemA.name} Element Source Reservoir`}>
+            <div className="depot-halo" />
+            <div className="depot-core">
+              <span className="depot-count">{reaction.reactantACount}×</span>
+              <span className="depot-sym">{elemA.symbol}</span>
+              <span className="depot-name">{elemA.name}</span>
+            </div>
+            <span className="depot-role-tag">Element Source</span>
+            {animPhase === 'phase2_detach' && <div className="depot-fission-wave" />}
+          </div>
+
+          {/* Reactant Element B Reservoir (Right Source) */}
+          <div className={`reactant-source-depot depot-right ${animPhase}`} title={`${elemB.name} Element Source Reservoir`}>
+            <div className="depot-halo" />
+            <div className="depot-core">
+              <span className="depot-count">{reaction.reactantBCount}×</span>
+              <span className="depot-sym">{elemB.symbol}</span>
+              <span className="depot-name">{elemB.name}</span>
+            </div>
+            <span className="depot-role-tag">Element Source</span>
+            {animPhase === 'phase2_detach' && <div className="depot-fission-wave" />}
+          </div>
 
           {/* Connected Chemical Bond Lines (Visible when bonded) */}
           {animPhase === 'phase5_bond' && isCovalent && assemblyPlan.bonds.length > 0 && (
@@ -565,6 +607,14 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
             />
           )}
 
+          {/* Synthesized Ionic Bond Bridge in Phase 5 */}
+          {animPhase === 'phase5_bond' && isIonic && (
+            <div className="synthesized-bond-bridge">
+              <div className="bridge-glow-beam" />
+              <span className="bridge-tag">⚡ Ionic Coulomb Bond</span>
+            </div>
+          )}
+
           {/* Constituent Moving Atoms with full Bohr Concentric Shells */}
           {assemblyPlan.atoms.map((atom) => {
             const coords = getAtomCoords(atom);
@@ -577,6 +627,9 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
 
             // Phase 1: Outermost shell highlight
             const isHighlighted = animPhase === 'phase1_prep';
+
+            // Phase 2: Atom breaks away from source
+            const isBreakingAway = animPhase === 'phase2_detach';
 
             // Phase 2+: Donor valence electron detaches
             const hideDetachedValenceElectron =
@@ -654,11 +707,12 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
                     text: atomColors.text,
                   }}
                   isHighlighted={isHighlighted}
+                  isBreakingAway={isBreakingAway}
                   hideOutermostShell={hideOutermostShell}
                   hideDetachedValenceElectron={hideDetachedValenceElectron}
                   octetCompleteGlow={octetCompleteGlow}
                   chargeBadge={chargeBadge}
-                  size={200}
+                  size={175}
                   role={isNodeDonor ? 'donor' : isNodeAcceptor ? 'acceptor' : 'neutral'}
                   configNote={configNote}
                 />
@@ -666,7 +720,7 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
             );
           })}
 
-          {/* Center Interaction Zone (Repulsion Barrier, Exothermic Flash, Compound Stamp) */}
+          {/* Center Interaction Zone (Repulsion Barrier, Exothermic Flash) */}
           <div className="arena-center-zone">
             {/* Repulsion Forcefield Barrier */}
             {(animPhase === 'phase3_transfer' || animPhase === 'phase4_accept' || animPhase === 'rejected') &&
@@ -684,23 +738,6 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
             {/* Exothermic Bond Flash */}
             {animPhase === 'phase5_bond' && reaction.isReactive && (
               <div className="exothermic-flash-ring" />
-            )}
-
-            {/* Assembled Compound Badge */}
-            {animPhase === 'phase5_bond' && reaction.isReactive && (
-              <div className="arena-result-stamp stamp-bonded">
-                <span className="stamp-icon">✨</span>
-                <span className="stamp-formula">{reaction.compoundFormula}</span>
-                <span className="stamp-sub">{reaction.bondTypeTitle}</span>
-              </div>
-            )}
-
-            {animPhase === 'rejected' && (
-              <div className="arena-result-stamp stamp-rejected">
-                <span className="stamp-icon">🛑</span>
-                <span className="stamp-formula">NO MOLECULE FORMED</span>
-                <span className="stamp-sub">Atoms Bounced Off Elastically</span>
-              </div>
             )}
           </div>
         </div>

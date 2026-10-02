@@ -15,6 +15,7 @@ export interface BohrAtomModelProps {
     text: string;
   };
   isHighlighted?: boolean;
+  isBreakingAway?: boolean;
   hideOutermostShell?: boolean;
   hideDetachedValenceElectron?: boolean;
   octetCompleteGlow?: boolean;
@@ -33,11 +34,12 @@ export const BohrAtomModel: React.FC<BohrAtomModelProps> = ({
   shells,
   themeColors,
   isHighlighted = false,
+  isBreakingAway = false,
   hideOutermostShell = false,
   hideDetachedValenceElectron = false,
   octetCompleteGlow = false,
   chargeBadge = null,
-  size = 210,
+  size = 175,
   showShellLetters = true,
   role = 'neutral',
   configNote = null,
@@ -55,18 +57,18 @@ export const BohrAtomModel: React.FC<BohrAtomModelProps> = ({
 
   // Radial calculation for concentric shells
   const getShellRadius = (index: number, total: number) => {
-    if (total === 1) return 62;
-    if (total === 2) return index === 0 ? 46 : 78;
-    if (total === 3) return [38, 62, 88][index];
-    if (total === 4) return [34, 52, 72, 92][index];
-    const minR = 30;
-    const maxR = 94;
+    if (total === 1) return 58;
+    if (total === 2) return index === 0 ? 44 : 74;
+    if (total === 3) return [36, 58, 84][index];
+    if (total === 4) return [32, 48, 68, 88][index];
+    const minR = 28;
+    const maxR = 90;
     return Math.round(minR + (index / (total - 1)) * (maxR - minR));
   };
 
   return (
     <div
-      className={`bohr-atom-container ${role} ${className}`}
+      className={`bohr-atom-container ${role} ${isBreakingAway ? 'is-breaking-away' : ''} ${className}`}
       style={{
         width: `${size}px`,
         height: `${size}px`,
@@ -75,6 +77,13 @@ export const BohrAtomModel: React.FC<BohrAtomModelProps> = ({
         '--atom-accent': themeColors.accent,
       } as React.CSSProperties}
     >
+      {/* Break-away notification tag when detaching from source */}
+      {isBreakingAway && (
+        <span className="breakaway-pill" aria-hidden="true">
+          ⚡ Detaching...
+        </span>
+      )}
+
       <svg
         className="bohr-atom-svg"
         viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}
@@ -88,6 +97,16 @@ export const BohrAtomModel: React.FC<BohrAtomModelProps> = ({
             <stop offset="100%" stopColor={themeColors.border || '#0284c7'} />
           </radialGradient>
         </defs>
+
+        {/* Break-away shockwave ring */}
+        {isBreakingAway && (
+          <circle
+            cx={center}
+            cy={center}
+            r="98"
+            className="bohr-breakaway-halo"
+          />
+        )}
 
         {/* Concentric Shells */}
         {effectiveShells.map((count, idx) => {
@@ -117,7 +136,7 @@ export const BohrAtomModel: React.FC<BohrAtomModelProps> = ({
                 key={`dot-${idx}-${dotIdx}`}
                 cx={cx}
                 cy={cy}
-                r={isValence ? (isHighlighted ? 4.2 : 3.6) : 3.0}
+                r={isValence ? (isHighlighted ? 4.0 : 3.4) : 2.8}
                 className={`bohr-electron-dot ${
                   isValence ? 'valence-electron' : ''
                 } ${isHighlighted && isValence ? 'valence-highlight' : ''} ${
@@ -172,30 +191,30 @@ export const BohrAtomModel: React.FC<BohrAtomModelProps> = ({
           <circle
             cx={center}
             cy={center}
-            r={19}
+            r={18}
             fill={`url(#nucleusGrad-${symbol}-${atomicNumber})`}
             className="bohr-nucleus-circle"
             stroke={themeColors.border}
             strokeWidth="1.8"
           />
-          <text x={center} y={center - 7} className="bohr-nucleus-num">
+          <text x={center} y={center - 6} className="bohr-nucleus-num">
             #{atomicNumber}
           </text>
           <text x={center} y={center + 5} className="bohr-nucleus-sym">
             {symbol}
           </text>
-          <text x={center} y={center + 14} className="bohr-nucleus-name">
+          <text x={center} y={center + 13} className="bohr-nucleus-name">
             {name.length > 7 ? name.slice(0, 6) + '.' : name}
           </text>
         </g>
 
         {/* Ionic Charge Badge (+ or −) */}
         {chargeBadge && (
-          <g className="bohr-charge-group" transform={`translate(${center + 16}, ${center - 26})`}>
+          <g className="bohr-charge-group" transform={`translate(${center + 15}, ${center - 24})`}>
             <circle
               cx="0"
               cy="0"
-              r="10"
+              r="9.5"
               className={`bohr-charge-badge ${
                 chargeBadge.includes('-') || chargeBadge.includes('−')
                   ? 'charge-neg'

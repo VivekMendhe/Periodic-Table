@@ -262,3 +262,50 @@
     opacity: 1;
   }
 }
+
+/* Break-away Fission Effects when detaching from source element */
+.breakaway-pill {
+  position: absolute;
+  top: -12px;
+  background: rgba(245, 158, 11, 0.9);
+  color: #0f172a;
+  border: 1px solid #fbbf24;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 12px;
+  z-index: 25;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+  animation: breakawayPulse 0.5s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+.bohr-breakaway-halo {
+  fill: none;
+  stroke: #f59e0b;
+  stroke-width: 2.2;
+  stroke-dasharray: 6 4;
+  animation: haloRipple 0.9s ease-out infinite;
+}
+
+@keyframes breakawayPulse {
+  0% { transform: scale(0.95); }
+  100% { transform: scale(1.08); }
+}
+
+@keyframes haloRipple {
+  0% {
+    transform: scale(0.7);
+    transform-origin: center;
+    opacity: 1;
+    stroke-width: 3;
+  }
+  100% {
+    transform: scale(1.25);
+    transform-origin: center;
+    opacity: 0;
+    stroke-width: 1;
+  }
+}
+
