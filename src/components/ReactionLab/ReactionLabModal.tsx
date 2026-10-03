@@ -328,10 +328,10 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
         return `Phase 4 (Forcefield Shockwave): Electrostatic repulsion wave deflects collision energy!`;
       case 'phase5_bond':
         if (isIonic) {
-          return `Phase 5 (Ionic Bond Formation): Electrostatic attraction brings ${donorNode.symbol}⁺ and ${acceptorNode.symbol}⁻ together into a connected ${reaction.compoundFormula} ionic unit!`;
+          return `Phase 5 (Synthesis): 2 Elements (${elemA.name} + ${elemB.name}) have combined into 1 new compound: ${reaction.compoundFormula} (${reaction.compoundName})!`;
         }
         if (isCovalent) {
-          return `Phase 5 (Covalent Bonding): Atoms connect into a stable ${reaction.compoundFormula} (${reaction.compoundName}) molecule via shared valence pairs!`;
+          return `Phase 5 (Synthesis): 2 Elements (${elemA.name} + ${elemB.name}) have combined into 1 new molecule: ${reaction.compoundFormula} (${reaction.compoundName})!`;
         }
         return `Phase 5 (Elastic Recoil): Atoms bounce off each other without chemical bond formation.`;
       case 'rejected':
@@ -666,6 +666,25 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
               phase={animPhase}
               streams={transferStreams}
             />
+          )}
+
+          {/* 2 Elements Combined into 1 Single Compound Capsule in Phase 5 */}
+          {animPhase === 'phase5_bond' && reaction.isReactive && (
+            <div className="unified-compound-capsule" aria-label="1 New Compound Formed from 2 Elements">
+              <div className="capsule-boundary-frame" />
+              <div className="capsule-header-pill">
+                <span className="capsule-badge-spark">✨</span>
+                <span className="capsule-badge-title">2 ELEMENTS COMBINED INTO 1 COMPOUND:</span>
+                <strong className="capsule-formula">{reaction.compoundFormula}</strong>
+                <span className="capsule-name">({reaction.compoundName})</span>
+              </div>
+
+              <div className="capsule-footer-bar">
+                <span className="footer-eq-text">
+                  <strong>{elemA.name} ({elemA.symbol})</strong> + <strong>{elemB.name} ({elemB.symbol})</strong> ➔ 1× <strong>{reaction.compoundFormula}</strong> ({reaction.bondTypeTitle})
+                </span>
+              </div>
+            </div>
           )}
 
           {/* Synthesized Ionic Bond Bridge in Phase 5 */}

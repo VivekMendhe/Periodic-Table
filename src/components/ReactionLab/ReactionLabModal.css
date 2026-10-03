@@ -664,6 +664,99 @@
   100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 }
 
+/* 2 Elements Formed 1 Unified Compound Capsule */
+.unified-compound-capsule {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 440px;
+  height: 275px;
+  pointer-events: none;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  animation: capsuleLock 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.capsule-boundary-frame {
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  border: 1.5px solid rgba(56, 189, 248, 0.45);
+  background: radial-gradient(ellipse at center, rgba(30, 58, 138, 0.15) 0%, rgba(15, 23, 42, 0.35) 75%, transparent 100%);
+  box-shadow: 0 0 28px rgba(56, 189, 248, 0.2), inset 0 0 24px rgba(56, 189, 248, 0.08);
+  backdrop-filter: blur(1.5px);
+  z-index: -1;
+}
+
+.capsule-header-pill {
+  position: relative;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(56, 189, 248, 0.6);
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  color: #38bdf8;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+}
+
+.capsule-badge-spark {
+  font-size: 0.8rem;
+}
+
+.capsule-badge-title {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  font-size: 0.66rem;
+  color: #93c5fd;
+}
+
+.capsule-formula {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.capsule-name {
+  font-weight: 600;
+  color: #a7f3d0;
+  font-size: 0.7rem;
+}
+
+.capsule-footer-bar {
+  position: relative;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  padding: 4px 14px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  white-space: nowrap;
+}
+
+.footer-eq-text strong {
+  color: #f8fafc;
+}
+
+@keyframes capsuleLock {
+  0% { transform: translate(-50%, -50%) scale(0.85); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
 /* Individual Constituent Atom Nodes */
 .assembly-atom-node {
   position: absolute;
@@ -1143,5 +1236,16 @@
   }
   .reaction-arena {
     height: 300px;
+  }
+  .unified-compound-capsule {
+    width: 95%;
+    max-width: 360px;
+    height: 250px;
+    padding: 6px;
+  }
+  .capsule-header-pill,
+  .capsule-footer-bar {
+    font-size: 0.62rem;
+    padding: 2px 8px;
   }
 }
