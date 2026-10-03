@@ -689,32 +689,15 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
             />
           )}
 
-          {/* 2 Elements Combined into 1 Single Compound Capsule in Phase 5 */}
+          {/* Fused Single Product Compound Element in Center (Ek Hi Element) */}
           {animPhase === 'phase5_bond' && reaction.isReactive && (
-            <div className="unified-compound-capsule" aria-label="1 New Compound Formed from 2 Elements">
-              <div className="capsule-boundary-frame" />
-              <div className="capsule-header-pill">
-                <span className="capsule-badge-spark">✨</span>
-                <span className="capsule-badge-title">2 ELEMENTS FUSED INTO 1 COMPOUND:</span>
-                <strong className="capsule-formula">{reaction.compoundFormula}</strong>
-                <span className="capsule-name">({reaction.compoundName})</span>
-              </div>
-
-              {/* Fused Single Product Compound Element in Center (Ek Hi Element) */}
-              <FusedCompoundElement
-                reaction={reaction}
-                elemA={elemA}
-                elemB={elemB}
-                isIonic={isIonic}
-                size={180}
-              />
-
-              <div className="capsule-footer-bar">
-                <span className="footer-eq-text">
-                  <strong>{elemA.name} ({elemA.symbol})</strong> + <strong>{elemB.name} ({elemB.symbol})</strong> ➔ 1× <strong>{reaction.compoundFormula}</strong> ({reaction.bondTypeTitle})
-                </span>
-              </div>
-            </div>
+            <FusedCompoundElement
+              reaction={reaction}
+              elemA={elemA}
+              elemB={elemB}
+              isIonic={isIonic}
+              size={220}
+            />
           )}
 
           {/* Falling Unreacted Surplus Atoms (Bache hue atoms niche girte hain) */}
