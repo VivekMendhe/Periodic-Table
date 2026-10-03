@@ -1,4 +1,4 @@
-/* Electron Transfer Arc & Continuous Trajectory Styles */
+/* Small Shell Electron Transfer Animation Styles */
 
 .transfer-arc-container {
   position: absolute;
@@ -6,217 +6,105 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 25;
-}
-
-.transfer-arc-svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-/* Curved trajectory track */
-.curved-trajectory-track {
-  animation: trackFlow 0.8s linear infinite;
-  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.6));
-}
-
-@keyframes trackFlow {
-  to {
-    stroke-dashoffset: -28;
-  }
-}
-
-/* Traveling Electron Particle */
-.traveling-electron-particle {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   z-index: 30;
-  transition: transform 0.2s ease-out;
 }
 
-.particle-core {
-  position: relative;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #ffffff 10%, #38bdf8 55%, #0284c7 95%);
-  box-shadow: 0 0 14px #38bdf8,
-              0 0 28px #0284c7,
-              0 0 45px rgba(56, 189, 248, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: electronCorePulse 0.5s ease-in-out infinite alternate;
-}
-
-.particle-symbol {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.68rem;
-  font-weight: 900;
-  color: #0f172a;
-  line-height: 1;
-}
-
-/* Trailing motion blur & spark */
-.particle-trail-blur {
+/* The small shell electron particle - exactly matches the Bohr shell electron size & color */
+.shell-transfer-electron {
   position: absolute;
-  right: 18px;
-  top: 50%;
-  width: 32px;
-  height: 6px;
-  border-radius: 4px;
-  background: linear-gradient(to left, rgba(56, 189, 248, 0.85), transparent);
-  transform: translateY(-50%);
-  filter: blur(1px);
-}
-
-.particle-trail-spark {
-  position: absolute;
-  inset: -6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  border: 1px dashed rgba(251, 191, 36, 0.8);
-  animation: spinSpark 0.6s linear infinite;
+  background: #f59e0b;
+  box-shadow: 0 0 6px #fbbf24, 0 0 10px rgba(245, 158, 11, 0.6);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 35;
 }
 
-.particle-tooltip {
-  margin-top: 6px;
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  color: #fef08a;
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(250, 204, 21, 0.5);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  padding: 2px 8px;
-  border-radius: 12px;
-  white-space: nowrap;
-  backdrop-filter: blur(4px);
-}
-
-/* Trajectory Movement Keyframes Across Phases */
-.traveling-electron-particle.phase2_detach {
-  left: var(--start-x, 32%);
+/* Phase 2: Detaches and lifts off from donor's outermost shell */
+.shell-transfer-electron.phase2_detach {
+  left: var(--start-x, 30%);
   top: var(--start-y, 50%);
-  animation: detachMotion 1.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: shellElectronDetach 1.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-.traveling-electron-particle.phase3_transfer {
-  left: calc(var(--start-x, 32%) + 6%);
-  top: calc(var(--start-y, 50%) - 7%);
-  animation: flightCurvedArc 1.4s cubic-bezier(0.25, 0.1, 0.25, 1) both;
-}
-
-.traveling-electron-particle.phase4_accept {
-  left: var(--end-x, 68%);
-  top: var(--end-y, 50%);
-  animation: enterAcceptorShell 1.2s cubic-bezier(0.18, 0.89, 0.32, 1.28) both;
-}
-
-@keyframes detachMotion {
+@keyframes shellElectronDetach {
   0% {
-    left: var(--start-x, 32%);
+    left: var(--start-x, 30%);
     top: var(--start-y, 50%);
-    transform: translate(-50%, -50%) scale(0.6);
-    opacity: 0.5;
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1);
   }
   50% {
-    left: calc(var(--start-x, 32%) + 3%);
-    top: calc(var(--start-y, 50%) - 4%);
-    transform: translate(-50%, -50%) scale(1.1);
+    left: calc(var(--start-x, 30%) + 1.2%);
+    top: calc(var(--start-y, 50%) - 1%);
     opacity: 1;
+    transform: translate(-50%, -50%) scale(1.15);
+    box-shadow: 0 0 8px #fbbf24, 0 0 14px rgba(245, 158, 11, 0.8);
   }
   100% {
-    left: calc(var(--start-x, 32%) + 6%);
-    top: calc(var(--start-y, 50%) - 7%);
-    transform: translate(-50%, -50%) scale(1);
+    left: calc(var(--start-x, 30%) + 2%);
+    top: calc(var(--start-y, 50%) - 1.5%);
     opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
   }
 }
 
-@keyframes flightCurvedArc {
+/* Phase 3: Travels smoothly across the gap into the acceptor's outer shell */
+.shell-transfer-electron.phase3_transfer {
+  left: calc(var(--start-x, 30%) + 2%);
+  top: calc(var(--start-y, 50%) - 1.5%);
+  animation: shellElectronFlight 1.4s cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
+
+@keyframes shellElectronFlight {
   0% {
-    left: calc(var(--start-x, 32%) + 6%);
-    top: calc(var(--start-y, 50%) - 7%);
+    left: calc(var(--start-x, 30%) + 2%);
+    top: calc(var(--start-y, 50%) - 1.5%);
     transform: translate(-50%, -50%) scale(1);
   }
-  30% {
-    left: calc(var(--start-x, 32%) + (var(--mid-x, 50%) - var(--start-x, 32%)) * 0.5);
-    top: calc(var(--mid-y, 25%) + 5%);
-    transform: translate(-50%, -50%) scale(1.2);
+  40% {
+    left: var(--mid-x, 50%);
+    top: var(--mid-y, 45%);
+    transform: translate(-50%, -50%) scale(1.15);
+    box-shadow: 0 0 9px #fbbf24, 0 0 16px rgba(245, 158, 11, 0.8);
+  }
+  100% {
+    left: var(--end-x, 70%);
+    top: var(--end-y, 50%);
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Phase 4: Enters the acceptor's outer shell ring */
+.shell-transfer-electron.phase4_accept {
+  left: var(--end-x, 70%);
+  top: var(--end-y, 50%);
+  animation: shellElectronEnter 1.2s cubic-bezier(0.18, 0.89, 0.32, 1.28) both;
+}
+
+@keyframes shellElectronEnter {
+  0% {
+    left: var(--end-x, 70%);
+    top: var(--end-y, 50%);
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 1;
   }
   60% {
-    left: var(--mid-x, 50%);
-    top: var(--mid-y, 25%);
+    left: var(--end-x, 70%);
+    top: var(--end-y, 50%);
     transform: translate(-50%, -50%) scale(1.3);
-  }
-  85% {
-    left: calc(var(--mid-x, 50%) + (var(--end-x, 68%) - var(--mid-x, 50%)) * 0.7);
-    top: calc(var(--mid-y, 25%) + 10%);
-    transform: translate(-50%, -50%) scale(1.15);
-  }
-  100% {
-    left: calc(var(--end-x, 68%) - 5%);
-    top: calc(var(--end-y, 50%) - 5%);
-    transform: translate(-50%, -50%) scale(1);
-  }
-}
-
-@keyframes enterAcceptorShell {
-  0% {
-    left: calc(var(--end-x, 68%) - 5%);
-    top: calc(var(--end-y, 50%) - 5%);
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-  }
-  50% {
-    left: var(--end-x, 68%);
-    top: var(--end-y, 50%);
-    transform: translate(-50%, -50%) scale(1.35);
+    background: #34d399;
+    box-shadow: 0 0 10px #10b981;
     opacity: 1;
   }
   100% {
-    left: var(--end-x, 68%);
+    left: var(--end-x, 70%);
     top: var(--end-y, 50%);
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 0;
-  }
-}
-
-@keyframes electronCorePulse {
-  0% {
-    box-shadow: 0 0 10px #38bdf8, 0 0 20px #0284c7;
-  }
-  100% {
-    box-shadow: 0 0 22px #60a5fa, 0 0 40px #0284c7, 0 0 55px rgba(56, 189, 248, 0.9);
-  }
-}
-
-@keyframes spinSpark {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Electrostatic Field Lines in Phase 5 */
-.field-line-center,
-.field-line-top,
-.field-line-bottom {
-  animation: fieldPulse 1.2s ease-in-out infinite alternate;
-  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.7));
-}
-
-@keyframes fieldPulse {
-  0% {
-    stroke-opacity: 0.5;
-    stroke-width: 2.2;
-  }
-  100% {
-    stroke-opacity: 1;
-    stroke-width: 4;
+    transform: translate(-50%, -50%) scale(1);
+    background: #34d399;
+    box-shadow: 0 0 6px #10b981;
+    opacity: 0; /* Smoothly transitions into the shell's permanent 8th electron */
   }
 }
