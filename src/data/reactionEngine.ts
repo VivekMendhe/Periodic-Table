@@ -937,9 +937,9 @@ export function generateAtomAssemblyLayout(
           atomicNumber: elemA.atomicNumber,
           category: elemA.category,
           role: 'reactantA',
-          startX: 22,
+          startX: 24,
           startY: 50,
-          bondedX: 12, // Bounced back!
+          bondedX: 24, // Bounced back to clean position!
           bondedY: 50,
           radius: 32,
         },
@@ -950,9 +950,9 @@ export function generateAtomAssemblyLayout(
           atomicNumber: elemB.atomicNumber,
           category: elemB.category,
           role: 'reactantB',
-          startX: 78,
+          startX: 76,
           startY: 50,
-          bondedX: 88, // Bounced back!
+          bondedX: 76, // Bounced back to clean position!
           bondedY: 50,
           radius: 32,
         },

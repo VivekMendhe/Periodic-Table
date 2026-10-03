@@ -275,11 +275,19 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
       case 'phase1_prep':
         return { x: atom.startX, y: atom.startY };
       case 'phase2_detach':
+        if (!reaction.isReactive) {
+          const delta = atom.role === 'reactantA' ? 6 : -6;
+          return { x: atom.startX + delta, y: atom.startY };
+        }
         return {
           x: atom.startX + (atom.bondedX - atom.startX) * 0.12,
           y: atom.startY + (atom.bondedY - atom.startY) * 0.12,
         };
       case 'phase3_transfer':
+        if (!reaction.isReactive) {
+          const clashX = atom.role === 'reactantA' ? 36 : 64;
+          return { x: clashX, y: atom.startY };
+        }
         return {
           x: atom.startX + (atom.bondedX - atom.startX) * 0.30,
           y: atom.startY + (atom.bondedY - atom.startY) * 0.30,
@@ -296,7 +304,8 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
         }
         return { x: atom.bondedX, y: atom.bondedY };
       case 'rejected':
-        return { x: atom.bondedX, y: atom.bondedY };
+        // Elastic recoil bounce back to clean resting start position
+        return { x: atom.startX, y: atom.startY };
     }
   };
 
@@ -590,37 +599,7 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
             </div>
           )}
 
-          {/* Reactant Element A Reservoir (Left Source) */}
-          <div className={`reactant-source-depot depot-left ${animPhase}`} title={`${elemA.name} Element Source Reservoir`}>
-            <div className="depot-halo" />
-            <div className="depot-core">
-              <span className="depot-count">
-                {animPhase === 'phase5_bond' && reaction.isReactive
-                  ? (excessACount > 0 ? `${excessACount}× (Fallen)` : '0× (Fused)')
-                  : `${reaction.reactantACount}×`}
-              </span>
-              <span className="depot-sym">{elemA.symbol}</span>
-              <span className="depot-name">{elemA.name}</span>
-            </div>
-            <span className="depot-role-tag">Element Source</span>
-            {animPhase === 'phase2_detach' && <div className="depot-fission-wave" />}
-          </div>
 
-          {/* Reactant Element B Reservoir (Right Source) */}
-          <div className={`reactant-source-depot depot-right ${animPhase}`} title={`${elemB.name} Element Source Reservoir`}>
-            <div className="depot-halo" />
-            <div className="depot-core">
-              <span className="depot-count">
-                {animPhase === 'phase5_bond' && reaction.isReactive
-                  ? (excessBCount > 0 ? `${excessBCount}× (Fallen)` : '0× (Fused)')
-                  : `${reaction.reactantBCount}×`}
-              </span>
-              <span className="depot-sym">{elemB.symbol}</span>
-              <span className="depot-name">{elemB.name}</span>
-            </div>
-            <span className="depot-role-tag">Element Source</span>
-            {animPhase === 'phase2_detach' && <div className="depot-fission-wave" />}
-          </div>
 
           {/* Connected Chemical Bond Lines (Visible when bonded) */}
           {animPhase === 'phase5_bond' && isCovalent && assemblyPlan.bonds.length > 0 && (
