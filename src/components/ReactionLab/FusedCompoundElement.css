@@ -1,0 +1,183 @@
+.fused-compound-container {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 25;
+  pointer-events: auto;
+  animation: fusedElementSpawn 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fusedElementSpawn {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0;
+    filter: brightness(3);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 1;
+    filter: brightness(1.8);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+/* Ambient Fusion Glow */
+.compound-fusion-glow {
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.4) 0%, rgba(52, 211, 153, 0.25) 45%, transparent 75%);
+  pointer-events: none;
+  z-index: -1;
+  animation: glowPulse 2s ease-in-out infinite alternate;
+}
+
+.is-covalent-compound .compound-fusion-glow {
+  background: radial-gradient(circle, rgba(52, 211, 153, 0.4) 0%, rgba(168, 85, 247, 0.25) 45%, transparent 75%);
+}
+
+@keyframes glowPulse {
+  from { transform: scale(0.9); opacity: 0.7; }
+  to { transform: scale(1.15); opacity: 1; }
+}
+
+/* Radial Shockwave Ring */
+.compound-shockwave-ring {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 2px solid #38bdf8;
+  pointer-events: none;
+  animation: shockwaveExpand 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+.is-covalent-compound .compound-shockwave-ring {
+  border-color: #34d399;
+}
+
+@keyframes shockwaveExpand {
+  0% {
+    transform: scale(0.2);
+    opacity: 1;
+    border-width: 4px;
+  }
+  100% {
+    transform: scale(2.8);
+    opacity: 0;
+    border-width: 1px;
+  }
+}
+
+/* Compound Status Tag */
+.compound-status-tag {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #38bdf8;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+
+.is-covalent-compound .compound-status-tag {
+  border-color: rgba(52, 211, 153, 0.45);
+  color: #34d399;
+}
+
+/* Fused Compound SVG */
+.fused-compound-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.4));
+}
+
+.fused-orbital-group.outer-group {
+  transform-origin: 120px 120px;
+  animation: orbitRotateClockwise 12s linear infinite;
+}
+
+.fused-orbital-group.inner-group {
+  transform-origin: 120px 120px;
+  animation: orbitRotateCounterClockwise 8s linear infinite;
+}
+
+@keyframes orbitRotateClockwise {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes orbitRotateCounterClockwise {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+.fused-core-sphere {
+  animation: corePulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes corePulse {
+  0% { transform-origin: 120px 120px; transform: scale(0.97); }
+  100% { transform-origin: 120px 120px; transform: scale(1.03); }
+}
+
+.fused-formula-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.35rem;
+  font-weight: 900;
+  fill: #ffffff;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.9);
+}
+
+.fused-constituents-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  fill: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.05em;
+}
+
+/* Compound Footer Info */
+.compound-footer-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-top: -6px;
+  text-align: center;
+}
+
+.compound-name-label {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #f8fafc;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+.compound-sub-badge {
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: #34d399;
+  background: rgba(6, 78, 59, 0.6);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  padding: 1px 8px;
+  border-radius: 10px;
+}

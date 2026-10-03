@@ -5,6 +5,8 @@ import { ELEMENT_SHELLS } from '../../data/elementExtensions';
 import { CustomElementSelect } from '../Compare/CustomElementSelect';
 import { BohrAtomModel } from './BohrAtomModel';
 import { ElectronTransferArc, type ElectronStreamItem } from './ElectronTransferArc';
+import { FusedCompoundElement } from './FusedCompoundElement';
+import { FallingExcessAtom } from './FallingExcessAtom';
 import {
   calculateReaction,
   generateAtomAssemblyLayout,
@@ -110,6 +112,10 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
   const acceptorNode =
     assemblyPlan.atoms.find((a) => a.symbol === acceptorSymbol) ||
     assemblyPlan.atoms[assemblyPlan.atoms.length - 1];
+
+  // Excess / unreacted atoms that will fall down to the floor in Phase 5
+  const excessACount = Math.max(0, reaction.reactantACount - 1);
+  const excessBCount = Math.max(0, reaction.reactantBCount - 1);
 
   // Generate individual electron transfer trajectory streams (one per valence electron)
   const transferStreams = useMemo<ElectronStreamItem[]>(() => {
@@ -284,6 +290,11 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
           y: atom.startY + (atom.bondedY - atom.startY) * 0.55,
         };
       case 'phase5_bond':
+        if (reaction.isReactive) {
+          // Atoms collide directly into center (50%, 50%) to fuse together into 1 single element!
+          return { x: 50, y: 50 };
+        }
+        return { x: atom.bondedX, y: atom.bondedY };
       case 'rejected':
         return { x: atom.bondedX, y: atom.bondedY };
     }
@@ -328,10 +339,12 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
         return `Phase 4 (Forcefield Shockwave): Electrostatic repulsion wave deflects collision energy!`;
       case 'phase5_bond':
         if (isIonic) {
-          return `Phase 5 (Synthesis): 2 Elements (${elemA.name} + ${elemB.name}) have combined into 1 new compound: ${reaction.compoundFormula} (${reaction.compoundName})!`;
+          const excessText = excessACount > 0 ? ` Excess unreacted ${excessACount}× ${elemA.symbol} atoms fall to the floor!` : '';
+          return `Phase 5 (Synthesis): Reactant atoms collide and fuse into 1 single new compound: ${reaction.compoundFormula} (${reaction.compoundName})!${excessText}`;
         }
         if (isCovalent) {
-          return `Phase 5 (Synthesis): 2 Elements (${elemA.name} + ${elemB.name}) have combined into 1 new molecule: ${reaction.compoundFormula} (${reaction.compoundName})!`;
+          const excessText = excessBCount > 0 ? ` Excess unreacted ${excessBCount}× ${elemB.symbol} atoms fall to the floor!` : '';
+          return `Phase 5 (Synthesis): Reactant atoms collide and fuse into 1 single new molecule: ${reaction.compoundFormula} (${reaction.compoundName})!${excessText}`;
         }
         return `Phase 5 (Elastic Recoil): Atoms bounce off each other without chemical bond formation.`;
       case 'rejected':
@@ -581,7 +594,11 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
           <div className={`reactant-source-depot depot-left ${animPhase}`} title={`${elemA.name} Element Source Reservoir`}>
             <div className="depot-halo" />
             <div className="depot-core">
-              <span className="depot-count">{reaction.reactantACount}×</span>
+              <span className="depot-count">
+                {animPhase === 'phase5_bond' && reaction.isReactive
+                  ? (excessACount > 0 ? `${excessACount}× (Fallen)` : '0× (Fused)')
+                  : `${reaction.reactantACount}×`}
+              </span>
               <span className="depot-sym">{elemA.symbol}</span>
               <span className="depot-name">{elemA.name}</span>
             </div>
@@ -593,7 +610,11 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
           <div className={`reactant-source-depot depot-right ${animPhase}`} title={`${elemB.name} Element Source Reservoir`}>
             <div className="depot-halo" />
             <div className="depot-core">
-              <span className="depot-count">{reaction.reactantBCount}×</span>
+              <span className="depot-count">
+                {animPhase === 'phase5_bond' && reaction.isReactive
+                  ? (excessBCount > 0 ? `${excessBCount}× (Fallen)` : '0× (Fused)')
+                  : `${reaction.reactantBCount}×`}
+              </span>
               <span className="depot-sym">{elemB.symbol}</span>
               <span className="depot-name">{elemB.name}</span>
             </div>
@@ -674,10 +695,19 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
               <div className="capsule-boundary-frame" />
               <div className="capsule-header-pill">
                 <span className="capsule-badge-spark">✨</span>
-                <span className="capsule-badge-title">2 ELEMENTS COMBINED INTO 1 COMPOUND:</span>
+                <span className="capsule-badge-title">2 ELEMENTS FUSED INTO 1 COMPOUND:</span>
                 <strong className="capsule-formula">{reaction.compoundFormula}</strong>
                 <span className="capsule-name">({reaction.compoundName})</span>
               </div>
+
+              {/* Fused Single Product Compound Element in Center (Ek Hi Element) */}
+              <FusedCompoundElement
+                reaction={reaction}
+                elemA={elemA}
+                elemB={elemB}
+                isIonic={isIonic}
+                size={180}
+              />
 
               <div className="capsule-footer-bar">
                 <span className="footer-eq-text">
@@ -687,13 +717,27 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
             </div>
           )}
 
-          {/* Synthesized Ionic Bond Bridge in Phase 5 */}
-          {animPhase === 'phase5_bond' && isIonic && (
-            <div className="synthesized-bond-bridge">
-              <div className="bridge-glow-beam" />
-              <span className="bridge-tag">⚡ Ionic Bond: {donorNode.symbol}⁺ + {acceptorNode.symbol}⁻ → {reaction.compoundFormula}</span>
-            </div>
+          {/* Falling Unreacted Surplus Atoms (Bache hue atoms niche girte hain) */}
+          {animPhase === 'phase5_bond' && reaction.isReactive && excessACount > 0 && (
+            <FallingExcessAtom
+              element={elemA}
+              count={excessACount}
+              side="left"
+              theme={theme}
+              delayMs={120}
+            />
           )}
+          {animPhase === 'phase5_bond' && reaction.isReactive && excessBCount > 0 && (
+            <FallingExcessAtom
+              element={elemB}
+              count={excessBCount}
+              side="right"
+              theme={theme}
+              delayMs={220}
+            />
+          )}
+
+
 
           {/* Constituent Moving Atoms with full Bohr Concentric Shells */}
           {assemblyPlan.atoms.map((atom) => {
@@ -770,6 +814,8 @@ export const ReactionLabModal: React.FC<ReactionLabModalProps> = ({
                 key={atom.id}
                 className={`assembly-atom-node ${atom.role} ${animPhase} ${
                   animPhase === 'rejected' ? 'atom-rejected-bounce' : ''
+                } ${
+                  animPhase === 'phase5_bond' && reaction.isReactive ? 'fusing-into-product' : ''
                 }`}
                 style={{
                   left: `${coords.x}%`,

@@ -1,0 +1,199 @@
+.falling-excess-wrapper {
+  position: absolute;
+  bottom: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 22;
+  pointer-events: none;
+}
+
+.falling-excess-wrapper.left {
+  left: 20%;
+}
+
+.falling-excess-wrapper.right {
+  right: 20%;
+}
+
+/* Falling Atom Body with Realistic Gravity Drop Physics */
+.falling-atom-body {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: gravityDropBounce 1.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes gravityDropBounce {
+  0% {
+    transform: translateY(-240px) rotate(0deg) scale(0.9);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  60% {
+    /* Accelerating rapidly downwards to hit floor */
+    transform: translateY(0px) rotate(35deg) scale(1.08, 0.85); /* Squash on impact */
+    animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+  }
+  75% {
+    /* Upward bounce */
+    transform: translateY(-42px) rotate(50deg) scale(0.95, 1.05);
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+  88% {
+    /* Second landing */
+    transform: translateY(0px) rotate(60deg) scale(1.04, 0.92);
+  }
+  94% {
+    /* Micro bounce */
+    transform: translateY(-12px) rotate(63deg) scale(0.98, 1.02);
+  }
+  100% {
+    /* Rests on arena floor */
+    transform: translateY(0px) rotate(65deg) scale(1, 1);
+    opacity: 1;
+  }
+}
+
+/* Mini Bohr Shell Orbit */
+.falling-mini-shell {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(245, 158, 11, 0.6);
+  animation: miniShellSpin 4s linear infinite;
+}
+
+@keyframes miniShellSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Nucleus Sphere */
+.falling-nucleus-sphere {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fef08a 0%, #f59e0b 60%, #b45309 100%);
+  border: 1.5px solid #fef08a;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #1e1b4b;
+}
+
+.falling-atom-count {
+  font-size: 0.6rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #78350f;
+}
+
+.falling-atom-symbol {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+/* Ground Impact Ripple Ring */
+.ground-impact-ripple {
+  position: absolute;
+  bottom: 0px;
+  width: 70px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #f59e0b;
+  opacity: 0;
+  animation: impactRipple 0.8s 0.65s ease-out forwards;
+}
+
+@keyframes impactRipple {
+  0% {
+    transform: scale(0.2);
+    opacity: 1;
+    border-width: 3px;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+    border-width: 1px;
+  }
+}
+
+/* Gravity Trail Sparks */
+.gravity-trail-spark {
+  position: absolute;
+  width: 4px;
+  height: 12px;
+  background: #fef08a;
+  border-radius: 2px;
+  opacity: 0;
+}
+
+.gravity-trail-spark.spark-1 {
+  top: -20px;
+  left: 15px;
+  animation: sparkFade 0.6s 0.2s ease-out;
+}
+
+.gravity-trail-spark.spark-2 {
+  top: -30px;
+  right: 18px;
+  animation: sparkFade 0.6s 0.3s ease-out;
+}
+
+@keyframes sparkFade {
+  0% { opacity: 0.9; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-20px); }
+}
+
+/* Fallen Atom Notification Label */
+.fallen-atom-label-box {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  animation: labelSlideUp 0.4s 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes labelSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fallen-status-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #fbbf24;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.fallen-desc {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.02em;
+}
